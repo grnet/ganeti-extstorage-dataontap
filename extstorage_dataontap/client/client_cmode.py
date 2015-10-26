@@ -18,22 +18,20 @@
 import copy
 import math
 
-from oslo_log import log as logging
+import logging
 import six
 
-from cinder import exception
-from cinder.i18n import _, _LW
-from cinder import utils
-from cinder.volume.drivers.netapp.dataontap.client import api as netapp_api
-from cinder.volume.drivers.netapp.dataontap.client import client_base
-from cinder.volume.drivers.netapp import utils as na_utils
+from extstorage_dataontap import exception
+from extstorage_dataontap.i18n import _, _LW
+from extstorage_dataontap.client import api as netapp_api
+from extstorage_dataontap.client import client_base
+from extstorage_dataontap.client import utils
 
 
 LOG = logging.getLogger(__name__)
 DELETED_PREFIX = 'deleted_cinder_'
 
 
-@six.add_metaclass(utils.TraceWrapperMetaclass)
 class Client(client_base.Client):
 
     def __init__(self, **kwargs):
@@ -426,7 +424,7 @@ class Client(client_base.Client):
         net_if_iter.add_child_elem(query)
         query.add_node_with_children(
             'net-interface-info',
-            **{'address': na_utils.resolve_hostname(ip)})
+            **{'address': utils.resolve_hostname(ip)})
         result = self.connection.invoke_successfully(net_if_iter, True)
         num_records = result.get_child_content('num-records')
         if num_records and int(num_records) >= 1:
@@ -625,7 +623,6 @@ class Client(client_base.Client):
 
         return size_total, size_available
 
-    @utils.trace_method
     def delete_file(self, path_to_file):
         """Delete file at path."""
 

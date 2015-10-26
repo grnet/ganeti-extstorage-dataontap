@@ -18,22 +18,18 @@ import copy
 import socket
 import sys
 
-from oslo_log import log as logging
-from oslo_utils import excutils
-from oslo_utils import timeutils
+import logging
 
 import six
 
-from cinder.i18n import _LE, _LW, _LI
-from cinder import utils
-from cinder.volume.drivers.netapp.dataontap.client import api as netapp_api
-from cinder.volume.drivers.netapp import utils as na_utils
+from extstorage_dataontap.i18n import _LE, _LW, _LI
+from extstorage_dataontap.client import api as netapp_api
+from extstorage_dataontap.client import utils
 
 
 LOG = logging.getLogger(__name__)
 
 
-@six.add_metaclass(utils.TraceWrapperMetaclass)
 class Client(object):
 
     def __init__(self, **kwargs):
@@ -46,7 +42,7 @@ class Client(object):
 
     def _init_features(self):
         """Set up the repository of available Data ONTAP features."""
-        self.features = na_utils.Features()
+        self.features = utils.Features()
 
     def get_ontapi_version(self, cached=True):
         """Gets the supported ontapi version."""
@@ -91,7 +87,7 @@ class Client(object):
         try:
             self.connection.invoke_successfully(lun_create, True)
         except netapp_api.NaApiError as ex:
-            with excutils.save_and_reraise_exception():
+            with utils.save_and_reraise_exception():
                 LOG.error(_LE("Error provisioning volume %(lun_name)s on "
                               "%(volume_name)s. Details: %(ex)s"),
                           {'lun_name': lun_name,
@@ -314,7 +310,7 @@ class Client(object):
         do_ems = True
         if hasattr(requester, 'last_ems'):
             sec_limit = 3559
-            if not (timeutils.is_older_than(requester.last_ems, sec_limit)):
+            if not (utils.is_older_than(requester.last_ems, sec_limit)):
                 do_ems = False
         if do_ems:
             na_server = copy.copy(self.connection)
@@ -345,4 +341,4 @@ class Client(object):
             except netapp_api.NaApiError as e:
                 LOG.warning(_LW("Failed to invoke ems. Message : %s"), e)
             finally:
-                requester.last_ems = timeutils.utcnow()
+                requester.last_ems = utils.utcnow()

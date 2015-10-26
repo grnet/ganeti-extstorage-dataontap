@@ -24,12 +24,12 @@ Contains classes required to issue API calls to Data ONTAP and OnCommand DFM.
 import copy
 
 from lxml import etree
-from oslo_log import log as logging
+import logging
 import six
 from six.moves import urllib
 
-from cinder import exception
-from cinder.i18n import _
+from extstorage_dataontap import exception
+from extstorage_dataontap.i18n import _
 
 LOG = logging.getLogger(__name__)
 
