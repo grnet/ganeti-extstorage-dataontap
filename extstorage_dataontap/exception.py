@@ -1,6 +1,7 @@
 # Copyright 2010 United States Government as represented by the
 # Administrator of the National Aeronautics and Space Administration.
 # All Rights Reserved.
+# Copyright 2015 GRNET S.A. All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -35,8 +36,8 @@ class Error(Exception):
     pass
 
 
-class CinderException(Exception):
-    """Base Cinder Exception
+class ExtStorageException(Exception):
+    """Base ExtStorage Exception
 
     To correctly use this class, inherit from it and define
     a 'message' property. That message will get printf'd
@@ -82,7 +83,7 @@ class CinderException(Exception):
         # it, because if we try to access the message via 'message' it will be
         # overshadowed by the class' message attribute
         self.msg = message
-        super(CinderException, self).__init__(message)
+        super(ExtStorageException, self).__init__(message)
 
     def _should_format(self):
         return self.kwargs['message'] is None or '%(message)' in self.message
@@ -91,21 +92,21 @@ class CinderException(Exception):
         return six.text_type(self.msg)
 
 
-class VolumeBackendAPIException(CinderException):
+class VolumeBackendAPIException(ExtStorageException):
     message = _("Bad or unexpected response from the storage volume "
                 "backend API: %(data)s")
 
 
-class VolumeDriverException(CinderException):
+class VolumeDriverException(ExtStorageException):
     message = _("Volume driver reported an error: %(message)s")
 
 
-class NotAuthorized(CinderException):
+class NotAuthorized(ExtStorageException):
     message = _("Not authorized.")
     code = 403
 
 
-class Invalid(CinderException):
+class Invalid(ExtStorageException):
     message = _("Unacceptable parameters.")
     code = 400
 
@@ -118,12 +119,17 @@ class InvalidHost(Invalid):
     message = _("Invalid host: %(reason)s")
 
 
+class InvalidConfigurationFile(Invalid):
+    message = _('Invalid configuration file: "%(filename)s". '
+                'Reason: %(reason)s')
+
+
 class InvalidConfigurationValue(Invalid):
     message = _('Value "%(value)s" is not valid for '
-                'configuration option "%(option)s"')
+                'configuration option "%(option)s. Reason: %(reason)s."')
 
 
-class NotFound(CinderException):
+class NotFound(ExtStorageException):
     message = _("Resource could not be found.")
     code = 404
     safe = True
@@ -133,12 +139,12 @@ class VolumeNotFound(NotFound):
     message = _("Volume %(volume_id)s could not be found.")
 
 
-class ManageExistingInvalidReference(CinderException):
+class ManageExistingInvalidReference(ExtStorageException):
     message = _("Manage existing volume failed due to invalid backend "
                 "reference %(existing_ref)s: %(reason)s")
 
 
-class ManageExistingVolumeTypeMismatch(CinderException):
+class ManageExistingVolumeTypeMismatch(ExtStorageException):
     message = _("Manage existing volume failed due to volume type mismatch: "
                 "%(reason)s")
 
