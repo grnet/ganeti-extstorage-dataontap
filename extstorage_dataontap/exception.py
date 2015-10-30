@@ -129,6 +129,10 @@ class InvalidConfigurationValue(Invalid):
                 'configuration option "%(option)s. Reason: %(reason)s."')
 
 
+class VolumeExists(Invalid):
+    message = _('Volume "%(name)s" already exists in pool "%(pool)s"')
+
+
 class NotFound(ExtStorageException):
     message = _("Resource could not be found.")
     code = 404

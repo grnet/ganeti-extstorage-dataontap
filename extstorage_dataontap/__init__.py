@@ -15,15 +15,29 @@
 # under the License.
 
 import sys
+import logging
 
 from functools import partial
+
+from extstorage_dataontap import configuration
+
+LOG = logging.getLogger()
+LOG.addHandler(logging.StreamHandler(sys.stderr))
+logging.basicConfig(format="[%(levelname)s] %(msg)s")
+
+if configuration.PROXY_STORAGE_FAMILY == 'ontap_cluster':
+    from extstorage_dataontap.provider_cmode import DataOnTapProvider
+else:
+    from extstorage_dataontap.provider_7mode import DataOnTapProvider
 
 
 def main(action):
     """Entry point"""
-    print action
+    provider = DataOnTapProvider()
+    return getattr(provider, action)()
 
 
+# Available ExtStorage actions
 actions = ['create', 'attach', 'detach', 'remove', 'grow', 'setinfo', 'verify',
            'snapshot', 'open', 'close']
 
