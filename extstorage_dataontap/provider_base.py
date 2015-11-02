@@ -104,3 +104,17 @@ class DataOnTapProviderBase(object):
             'Path': '/vol/%s/%s' % (self.pool_name, lun_name)}
 
         self.client.create_lun(self.pool_name, lun_name, size, metadata, None)
+        return 0
+
+    def remove(self):
+        """Remove an existing volume from the external storage"""
+        lun_name = os.getenv('VOL_NAME')
+
+        assert lun_name is not None, "missing VOL_NAME parameter"
+
+        lun = self.get_lun_by_name(lun_name)
+        if lun is None:
+            raise exception.VolumeNotFound(volume_id=lun_name)
+
+        self.client.destroy_lun(lun.metadata['Path'])
+        return 0
