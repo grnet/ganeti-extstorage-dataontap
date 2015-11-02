@@ -164,7 +164,7 @@ class Client(object):
         lun_resize = netapp_api.NaElement.create_node_with_children(
             'lun-resize',
             **{'path': path,
-               'size': new_size_bytes})
+               'size': six.text_type(new_size_bytes)})
         if force:
             lun_resize.add_new_child('force', 'true')
         self.connection.invoke_successfully(lun_resize, True)
