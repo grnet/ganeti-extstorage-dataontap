@@ -135,3 +135,28 @@ class DataOnTapProviderBase(object):
 
         self.client.do_direct_resize(lun.metadata['Path'], size)
         return 0
+
+    def _clone_lun(self, lun, new_name):
+        """Clone an existing Lun"""
+        raise NotImplementedError()
+
+    def snapshot(self):
+        """Take a snapshot of a given volume"""
+        lun_name = os.getenv('VOL_NAME')
+        new_name = os.getenv('VOL_SNAPSHOT_NAME')
+
+        # The snapshot size is ignored by the driver
+        # size = os.getenv('VOL_SNAPSHOT_SIZE')
+
+        assert lun_name is not None, "missing VOL_NAME parameter"
+        assert new_name is not None, "missing VOL_SNAPSHOT_NAME parameter"
+        # assert size is not None, "missing VOL_SNAPSHOT_SIZE parameter"
+
+        # size = int(size) * (1024 ** 2)  # Size was in mebibytes
+
+        lun = self.get_lun_by_name(lun_name)
+        if lun is None:
+            raise exception.VolumeNotFound(volume_id=lun_name)
+
+        self._clone_lun(lun, new_name)
+        return 0

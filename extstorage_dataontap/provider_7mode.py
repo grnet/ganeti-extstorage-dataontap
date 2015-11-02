@@ -42,3 +42,12 @@ class DataOnTapProvider(DataOnTapProviderBase):
             'is-space-reservation-enabled')
         meta_dict['UUID'] = lun.get_child_content('uuid')
         return meta_dict
+
+    def _clone_lun(self, lun, new_name):
+        """Clone an existing Lun"""
+
+        path = lun.metadata['Path']
+        clone_path = "%s/%s" % (path.rpartition('/')[0], new_name)
+
+        self.client.clone_lun(path, clone_path, lun.name, new_name,
+                              self.space_reserved)
