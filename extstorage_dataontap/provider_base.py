@@ -118,3 +118,20 @@ class DataOnTapProviderBase(object):
 
         self.client.destroy_lun(lun.metadata['Path'])
         return 0
+
+    def grow(self):
+        """Grow and existing volume"""
+        lun_name = os.getenv('VOL_NAME')
+        size = os.getenv('VOL_NEW_SIZE')
+
+        assert lun_name is not None, "missing VOL_NAME parameter"
+        assert size is not None, "missing VOL_NEW_SIZE parameter"
+
+        size = int(size) * (1024 ** 2)  # Size was in mebibytes
+
+        lun = self.get_lun_by_name(lun_name)
+        if lun is None:
+            raise exception.VolumeNotFound(volume_id=lun_name)
+
+        self.client.do_direct_resize(lun.metadata['Path'], size)
+        return 0
