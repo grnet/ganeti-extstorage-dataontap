@@ -16,7 +16,30 @@
 # under the License.
 
 from setuptools import setup, find_packages
+from setuptools.command.install import install as _install
+from setuptools.command.easy_install import log
 import sys
+import os
+
+# Overload the install command to copy the parameters.list in the installation
+# directory. We use this instead of adding scripts=['parameter.list'] in the
+# setup to copy the file because this will not set the execution bit to the
+# target file
+class install(_install):
+    def run(self):
+        _install.run(self)
+
+        src = os.path.join(os.path.dirname(sys.modules[__name__].__file__),
+                           'parameters.list')
+        target = os.path.join(self.install_scripts, 'parameters.list')
+        log.info("Installing %s to %s" % (src, self.install_scripts))
+
+        with open(src, 'r') as f:
+            contents = f.read()
+
+        with open(target, 'w') as f:
+            f.write(contents)
+            f.close()
 
 
 setup(
@@ -26,6 +49,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=['iso8601', 'lxml'],
+    cmdclass={'install': install},
     entry_points={
         'console_scripts': [
             'create = extstorage_dataontap:create',
