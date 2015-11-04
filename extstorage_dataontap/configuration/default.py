@@ -93,3 +93,7 @@ SAN_POOL_NAME_SEARCH_PATTERN = "(.+)"
 # This options specifies the pool (volume in the Data ONTAP context) to create
 # the LUNs on.
 SAN_POOL_NAME = "vol0"
+
+# If this option is set, the LUN will be mapped to the specified initiator
+# group upon creation.
+SAN_IGROUP = None

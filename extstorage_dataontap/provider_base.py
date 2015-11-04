@@ -59,6 +59,7 @@ class DataOnTapProviderBase(object):
             str(configuration.PROVISIONING_LUN_SPACE_RESERVATION).lower()
         self.pool_regexp = \
             re.compile(configuration.SAN_POOL_NAME_SEARCH_PATTERN)
+        self.igroup = configuration.SAN_IGROUP
 
     def client_setup(self):
         """Setup the Data ONTAP client"""
@@ -104,6 +105,10 @@ class DataOnTapProviderBase(object):
             'Path': '/vol/%s/%s' % (self.pool_name, lun_name)}
 
         self.client.create_lun(self.pool_name, lun_name, size, metadata, None)
+
+        if self.igroup:
+            self.client.map_lun(metadata['Path'], self.igroup)
+
         return 0
 
     def remove(self):
