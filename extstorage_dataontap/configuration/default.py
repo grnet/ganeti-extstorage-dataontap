@@ -14,6 +14,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+
+# If set, debug info will be printed
+DEBUG = False
+
 # The storage family type used on the storage system;
 # valid values are ontap_7mode for using Data ONTAP operating in 7-Mode and
 # ontap_cluster for using clustered Data ONTAP

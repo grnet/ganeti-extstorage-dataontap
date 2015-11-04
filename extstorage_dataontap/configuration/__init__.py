@@ -22,16 +22,20 @@ import sys
 import re
 
 from functools import partial
+from extstorage_dataontap import exception
 
 # import the default options
 from extstorage_dataontap.configuration.default import *  # noqa
 
-from extstorage_dataontap import exception
 
-CONFIG = os.environ.get('EXTP_CONFIG', '/etc/extstorage_dataontap.conf')
+CONFIG = '/etc/extstorage_dataontap.conf'
 OSTYPES = ('solaris', 'windows', 'hpux', 'aix', 'linux', 'netware', 'vmware',
            'windows_gpt', 'windows_2008', 'xen', 'hyper_v', 'solaris_efi',
            'openvms')
+
+for var in [i for i in os.environ if i.startswith('EXTP_')]:
+    value = os.environ[var] if len(os.environ[var]) else None
+    setattr(sys.modules[__name__], var[5:], value)
 
 if os.path.exists(CONFIG):
     try:
@@ -96,7 +100,22 @@ def _is_regexp(val):
         raise ValueError("Not a valid regular expression: %s" % e.message)
 
 
+def _match(pattern):
+    def inner(val, pattern):
+        regexp = re.compile(pattern)
+        if not regexp.match(val):
+            raise ValueError("Does not comply with pattern: %s" % pattern)
+    return partial(inner, pattern=pattern)
+
+
 # Validate the configuration
+if PROXY_STORAGE_FAMILY == 'ontap_cluster':
+    # Not usable in cluster mode
+    del SEVEN_MODE_VFILER  # noqa
+    del SEVEN_MODE_PARTNER_BACKEND_NAME  # noqa
+elif PROXY_STORAGE_FAMILY == 'ontap_7mode':
+    # Not usable in cluster mode
+    del CLUSTER_MODE_VSERVER  # noqa
 _check_val('PROXY_STORAGE_FAMILY', _is_in(('ontap_cluster', 'ontap_7mode')))
 _check_val('PROXY_STORAGE_PROTOCOL', _is_in(('iscsi', 'fc')))
 _check_val('CONNECTION_PORT', _is_none_or_in(xrange(2**16)))
@@ -107,3 +126,4 @@ _check_val('PROVISIONING_SIZE_MULTIPLIER', _is_float)
 _check_val('PROVISIONING_LUN_SPACE_RESERVATION', _is_bool)
 _check_val('SAN_POOL_NAME_SEARCH_PATTERN', _is_regexp)
 _check_val('SAN_LUN_OSTYPE', _is_in((OSTYPES)))
+_check_val('SAN_POOL_NAME', _match(SAN_POOL_NAME_SEARCH_PATTERN))

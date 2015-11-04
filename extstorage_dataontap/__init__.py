@@ -21,9 +21,12 @@ from functools import partial
 
 from extstorage_dataontap import configuration
 
+ch = logging.StreamHandler(sys.stderr)
+formatter = logging.Formatter("%(asctime)-15s [%(levelname)s] %(message)s")
+ch.setFormatter(formatter)
 LOG = logging.getLogger()
-LOG.addHandler(logging.StreamHandler(sys.stderr))
-logging.basicConfig(format="[%(levelname)s] %(msg)s")
+LOG.addHandler(ch)
+LOG.setLevel(logging.DEBUG if configuration.DEBUG else logging.INFO)
 
 if configuration.PROXY_STORAGE_FAMILY == 'ontap_cluster':
     from extstorage_dataontap.provider_cmode import DataOnTapProvider
