@@ -48,7 +48,7 @@ setup(
     description="Ganeti ExtStorage Provider for NetApp's Data ONTAP",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=['iso8601', 'lxml'],
+    install_requires=['six', 'iso8601', 'lxml'],
     cmdclass={'install': install},
     entry_points={
         'console_scripts': [
