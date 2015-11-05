@@ -26,11 +26,11 @@ class DataOnTapProvider(DataOnTapProviderBase):
     """
     def _client_setup(self):
         """Setup the Data ONTAP client"""
-        return Client(hostname=configuration.CONNECTION_HOSTNAME,
-                      transport_type=configuration.CONNECTION_TRANSPORT_TYPE,
-                      port=configuration.CONNECTION_PORT,
-                      username=configuration.AUTH_LOGIN,
-                      password=configuration.AUTH_PASSWORD,
+        return Client(hostname=configuration.HOSTNAME,
+                      transport_type=configuration.TRANSPORT_TYPE,
+                      port=configuration.PORT,
+                      username=configuration.LOGIN,
+                      password=configuration.PASSWORD,
                       vserver=configuration.CLUSTER_MODE_VSERVER)
 
     def _create_lun_meta(self, lun):

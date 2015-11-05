@@ -109,21 +109,20 @@ def _match(pattern):
 
 
 # Validate the configuration
-if PROXY_STORAGE_FAMILY == 'ontap_cluster':
+if STORAGE_FAMILY == 'ontap_cluster':
     # Not usable in cluster mode
     del SEVEN_MODE_VFILER  # noqa
     del SEVEN_MODE_PARTNER_BACKEND_NAME  # noqa
-elif PROXY_STORAGE_FAMILY == 'ontap_7mode':
+elif STORAGE_FAMILY == 'ontap_7mode':
     # Not usable in cluster mode
     del CLUSTER_MODE_VSERVER  # noqa
-_check_val('PROXY_STORAGE_FAMILY', _is_in(('ontap_cluster', 'ontap_7mode')))
-_check_val('PROXY_STORAGE_PROTOCOL', _is_in(('iscsi', 'fc')))
-_check_val('CONNECTION_PORT', _is_none_or_in(xrange(2**16)))
-_check_val('CONNECTION_TRANSPORT_TYPE', _is_in(('http', 'https')))
-_check_val('AUTH_LOGIN', _is_nonempty_string)
-_check_val('AUTH_PASSWORD', _is_nonempty_string)
-_check_val('PROVISIONING_SIZE_MULTIPLIER', _is_float)
-_check_val('PROVISIONING_LUN_SPACE_RESERVATION', _is_bool)
-_check_val('SAN_POOL_NAME_SEARCH_PATTERN', _is_regexp)
-_check_val('SAN_LUN_OSTYPE', _is_in((OSTYPES)))
-_check_val('SAN_POOL_NAME', _match(SAN_POOL_NAME_SEARCH_PATTERN))
+_check_val('STORAGE_FAMILY', _is_in(('ontap_cluster', 'ontap_7mode')))
+_check_val('STORAGE_PROTOCOL', _is_in(('iscsi', 'fc')))
+_check_val('PORT', _is_none_or_in(xrange(2**16)))
+_check_val('TRANSPORT_TYPE', _is_in(('http', 'https')))
+_check_val('LOGIN', _is_nonempty_string)
+_check_val('PASSWORD', _is_nonempty_string)
+_check_val('LUN_SPACE_RESERVATION', _is_bool)
+_check_val('POOL_NAME_SEARCH_PATTERN', _is_regexp)
+_check_val('LUN_OSTYPE', _is_in((OSTYPES)))
+_check_val('POOL', _match(POOL_NAME_SEARCH_PATTERN))

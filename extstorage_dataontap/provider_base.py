@@ -53,13 +53,13 @@ class DataOnTapProviderBase(object):
     def __init__(self):
         """Initializes the provider"""
         self.client = self._client_setup()
-        self.pool_name = configuration.SAN_POOL_NAME
-        self.ostype = configuration.SAN_LUN_OSTYPE
+        self.pool_name = configuration.POOL
+        self.ostype = configuration.LUN_OSTYPE
         self.space_reserved = \
-            str(configuration.PROVISIONING_LUN_SPACE_RESERVATION).lower()
+            str(configuration.LUN_SPACE_RESERVATION).lower()
         self.pool_regexp = \
-            re.compile(configuration.SAN_POOL_NAME_SEARCH_PATTERN)
-        self.igroup = configuration.SAN_IGROUP
+            re.compile(configuration.POOL_NAME_SEARCH_PATTERN)
+        self.igroup = configuration.IGROUP
 
     def _client_setup(self):
         """Setup the Data ONTAP client"""

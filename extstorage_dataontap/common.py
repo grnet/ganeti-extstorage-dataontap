@@ -28,7 +28,7 @@ LOG = logging.getLogger()
 LOG.addHandler(ch)
 LOG.setLevel(logging.DEBUG if configuration.DEBUG else logging.INFO)
 
-if configuration.PROXY_STORAGE_FAMILY == 'ontap_cluster':
+if configuration.STORAGE_FAMILY == 'ontap_cluster':
     from extstorage_dataontap.provider_cmode import DataOnTapProvider
 else:
     from extstorage_dataontap.provider_7mode import DataOnTapProvider
