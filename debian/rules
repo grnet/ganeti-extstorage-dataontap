@@ -1,0 +1,13 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --with python2
+
+override_dh_auto_install:
+	dh_auto_install -- --install-scripts=/usr/share/ganeti/extstorage/dataontap
+	install -D -m 0600 extstorage_dataontap/configuration/default.py \
+	 $(CURDIR)/debian/ganeti-extstorage-dataontap/etc/extstorage_dataontap.conf
+	sed -i 's/^[A-Z]/# \0/g' $(CURDIR)/debian/ganeti-extstorage-dataontap/etc/extstorage_dataontap.conf
+
+override_dh_fixperms:
+	dh_fixperms --exclude debian/ganeti-extstorage-dataontap/etc/extstorage_dataontap.conf
