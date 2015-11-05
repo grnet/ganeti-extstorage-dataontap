@@ -52,7 +52,7 @@ class DataOnTapProviderBase(object):
     """ExtStorage provider class for NetApp's Data ONTAP"""
     def __init__(self):
         """Initializes the provider"""
-        self.client = self.client_setup()
+        self.client = self._client_setup()
         self.pool_name = configuration.SAN_POOL_NAME
         self.ostype = configuration.SAN_LUN_OSTYPE
         self.space_reserved = \
@@ -61,7 +61,7 @@ class DataOnTapProviderBase(object):
             re.compile(configuration.SAN_POOL_NAME_SEARCH_PATTERN)
         self.igroup = configuration.SAN_IGROUP
 
-    def client_setup(self):
+    def _client_setup(self):
         """Setup the Data ONTAP client"""
         raise NotImplementedError()
 
@@ -69,7 +69,7 @@ class DataOnTapProviderBase(object):
         """Creates LUN metadata dictionary"""
         raise NotImplementedError()
 
-    def get_lun_by_name(self, key):
+    def _get_lun_by_name(self, key):
         """Fetch a lun by name"""
 
         lun_list = self.client.get_lun_list()
@@ -84,15 +84,19 @@ class DataOnTapProviderBase(object):
                 return NetAppLun(name, size, self._create_lun_meta(lun))
         return None
 
+    def _clone_lun(self, lun, new_name):
+        """Clone an existing Lun"""
+        raise NotImplementedError()
+
     def create(self):
-        """Create a new volume inside the external storage"""
+        """Driver's entry point for the create script"""
         lun_name = os.getenv('VOL_NAME')
         size = os.getenv('VOL_SIZE')
 
         assert lun_name is not None, "missing VOL_NAME parameter"
         assert size is not None, "missing VOL_SIZE parameter"
 
-        exists = self.get_lun_by_name(lun_name)
+        exists = self._get_lun_by_name(lun_name)
         if exists is not None:
             raise exception.VolumeExists(name=exists.name,
                                          pool=exists.metadata['Volume'])
@@ -111,13 +115,21 @@ class DataOnTapProviderBase(object):
 
         return 0
 
+    def attach(self):
+        """Driver's entry point for the attach script"""
+        return 0
+
+    def detach(self):
+        """Driver's entry point for the detach script"""
+        return 0
+
     def remove(self):
-        """Remove an existing volume from the external storage"""
+        """Driver's entry point for the remove script"""
         lun_name = os.getenv('VOL_NAME')
 
         assert lun_name is not None, "missing VOL_NAME parameter"
 
-        lun = self.get_lun_by_name(lun_name)
+        lun = self._get_lun_by_name(lun_name)
         if lun is None:
             raise exception.VolumeNotFound(volume_id=lun_name)
 
@@ -125,7 +137,7 @@ class DataOnTapProviderBase(object):
         return 0
 
     def grow(self):
-        """Grow and existing volume"""
+        """Driver's entry point for the grow script"""
         lun_name = os.getenv('VOL_NAME')
         size = os.getenv('VOL_NEW_SIZE')
 
@@ -134,19 +146,23 @@ class DataOnTapProviderBase(object):
 
         size = int(size) * (1024 ** 2)  # Size was in mebibytes
 
-        lun = self.get_lun_by_name(lun_name)
+        lun = self._get_lun_by_name(lun_name)
         if lun is None:
             raise exception.VolumeNotFound(volume_id=lun_name)
 
         self.client.do_direct_resize(lun.metadata['Path'], size)
         return 0
 
-    def _clone_lun(self, lun, new_name):
-        """Clone an existing Lun"""
-        raise NotImplementedError()
+    def setinfo(self):
+        """Driver's entry point for the setinfo script"""
+        return 0
+
+    def verify(self):
+        """Driver's entry point for the verify script"""
+        return 0
 
     def snapshot(self):
-        """Take a snapshot of a given volume"""
+        """Driver's entry point for the grow script"""
         lun_name = os.getenv('VOL_NAME')
         new_name = os.getenv('VOL_SNAPSHOT_NAME')
 
@@ -159,9 +175,17 @@ class DataOnTapProviderBase(object):
 
         # size = int(size) * (1024 ** 2)  # Size was in mebibytes
 
-        lun = self.get_lun_by_name(lun_name)
+        lun = self._get_lun_by_name(lun_name)
         if lun is None:
             raise exception.VolumeNotFound(volume_id=lun_name)
 
         self._clone_lun(lun, new_name)
+        return 0
+
+    def open(self):
+        """Driver's entry point for the open script"""
+        return 0
+
+    def close(self):
+        """Driver's entry point for the close script"""
         return 0

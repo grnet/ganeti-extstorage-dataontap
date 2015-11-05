@@ -22,7 +22,7 @@ from extstorage_dataontap.client.client_7mode import Client
 class DataOnTapProvider(DataOnTapProviderBase):
     """ExtStorage provider class for NetApp's Data ONTAP working in 7-mode"""
 
-    def client_setup(self):
+    def _client_setup(self):
         """Setup the Data ONTAP client"""
         return Client(hostname=configuration.CONNECTION_HOSTNAME,
                       transport_type=configuration.CONNECTION_TRANSPORT_TYPE,

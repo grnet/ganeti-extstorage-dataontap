@@ -24,7 +24,7 @@ class DataOnTapProvider(DataOnTapProviderBase):
     """ExtStorage provider class for NetApp's Data ONTAP working in cluster
     mode
     """
-    def client_setup(self):
+    def _client_setup(self):
         """Setup the Data ONTAP client"""
         return Client(hostname=configuration.CONNECTION_HOSTNAME,
                       transport_type=configuration.CONNECTION_TRANSPORT_TYPE,
