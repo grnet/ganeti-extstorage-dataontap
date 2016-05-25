@@ -2,8 +2,8 @@ Source: ganeti-extstorage-dataontap
 Section: python
 Priority: optional
 Maintainer: Nikos Skalkotos <skalkoto@grnet.gr>
-Build-Depends: python-all (>=2.5), python-setuptools
-Standards-Version: 3.9.3
+Build-Depends: python-all (>=2.5), python-setuptools, debhelper, dh-python
+Standards-Version: 3.9.6
 Homepage: https://github.com/grnet/ganeti-extstorage-dataontap
 Vcs-Git: https://github.com/grnet/ganeti-extstorage-dataontap
 
@@ -12,3 +12,5 @@ Architecture: all
 Depends: ${misc:Depends}, ${python:Depends}
 Enhances: ganeti
 Description: Ganeti ExtStorage provider for NetApp'a Data ONTAP
+ Ganeti ExtStorage provider for NetApp'a Data ONTAP based on the dataontap
+ driver found in OpenStack Block Storage Cinder
