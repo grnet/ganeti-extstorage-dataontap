@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015 GRNET S.A.
+# Copyright (C) 2015-2016 GRNET S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -38,6 +38,10 @@ PORT = None
 # The transport protocol used when communicating with the storage system or
 # proxy server.
 TRANSPORT_TYPE = "https"
+
+# Verify the SSL Certificate when TRANSPORT_TYPE is "https".
+# WARNING: Turning this to False has security implications!
+VERIFY_CERT = True
 
 # Administrative user account name used to access the storage system or proxy
 # server.

@@ -38,7 +38,8 @@ class Client(object):
             transport_type=kwargs['transport_type'],
             port=kwargs['port'],
             username=kwargs['username'],
-            password=kwargs['password'])
+            password=kwargs['password'],
+            verify_cert=kwargs['verify_cert'])
 
     def _init_features(self):
         """Set up the repository of available Data ONTAP features."""

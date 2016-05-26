@@ -3,6 +3,7 @@
 # Copyright (c) 2014 Glenn Gobeli.  All rights reserved.
 # Copyright (c) 2014 Clinton Knight.  All rights reserved.
 # Copyright (c) 2015 Alex Meade.  All rights reserved.
+# Copyright (c) 2016 GRNET S.A.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -51,7 +52,7 @@ class NaServer(object):
 
     def __init__(self, host, server_type=SERVER_TYPE_FILER,
                  transport_type=TRANSPORT_TYPE_HTTP,
-                 style=STYLE_LOGIN_PASSWORD, username=None,
+                 style=STYLE_LOGIN_PASSWORD, verify_cert=True, username=None,
                  password=None, port=None):
         self._host = host
         self.set_server_type(server_type)
@@ -62,6 +63,13 @@ class NaServer(object):
         self._username = username
         self._password = password
         self._refresh_conn = True
+
+        # This is a hack but it works. If we don't want to verify the
+        # certificate, we can make the unverified_context the default https
+        # context.
+        if not verify_cert:
+            import ssl
+            ssl._create_default_https_context = ssl._create_unverified_context
 
         LOG.debug('Using NetApp controller: %s', self._host)
 
@@ -214,6 +222,8 @@ class NaServer(object):
                 response = self._opener.open(request)
         except urllib.error.HTTPError as e:
             raise NaApiError(e.code, e.msg)
+        except urllib.error.URLError as e:
+            raise NaApiError(message=e.reason)
         except Exception:
             raise NaApiError('Unexpected error')
 

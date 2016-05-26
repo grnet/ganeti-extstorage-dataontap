@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2014 Clinton Knight. All rights reserved.
-# Copyright (c) 2015 GRNET S.A.
+# Copyright (c) 2015-2016 GRNET S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -31,7 +31,8 @@ class DataOnTapProvider(DataOnTapProviderBase):
                       port=configuration.PORT,
                       username=configuration.LOGIN,
                       password=configuration.PASSWORD,
-                      vserver=configuration.CLUSTER_MODE_VSERVER)
+                      vserver=configuration.CLUSTER_MODE_VSERVER,
+                      verify_cert=configuration.VERIFY_CERT)
 
     def _create_lun_meta(self, lun):
         """Creates LUN metadata dictionary."""
