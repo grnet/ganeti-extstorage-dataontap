@@ -50,6 +50,7 @@ class NetAppLun(object):
 
 class DataOnTapProviderBase(object):
     """ExtStorage provider class for NetApp's Data ONTAP"""
+
     def __init__(self):
         """Initializes the provider"""
         self.client = self._client_setup()
@@ -69,20 +70,19 @@ class DataOnTapProviderBase(object):
         """Creates LUN metadata dictionary"""
         raise NotImplementedError()
 
-    def _get_lun_by_name(self, key):
+    def _get_lun_by_name(self, name):
         """Fetch a lun by name"""
 
-        lun_list = self.client.get_lun_list()
-        for lun in lun_list:
-            (_, _, pool, name) = lun.get_child_content('path').split('/')
-            if key == name:
-                if not re.match(self.pool_regexp, pool):
-                    LOG.warning("Not returning lun %s because pool %s is "
-                                "outside the search scope.")
-                    continue
-                size = int(lun.get_child_content('size'))
-                return NetAppLun(name, size, self._create_lun_meta(lun))
-        return None
+        lun_list = self.client.get_lun_by_args(path='/vol/*/%s' % name)
+
+        assert len(lun_list) < 2, "Multiple LUNs found with name: `%s'" % name
+
+        if len(lun_list) == 0:
+            return None
+
+        return NetAppLun(name,
+                         int(lun_list[0].get_child_content('size')),
+                         self._create_lun_meta(lun_list[0]))
 
     def _clone_lun(self, lun, new_name):
         """Clone an existing Lun"""
