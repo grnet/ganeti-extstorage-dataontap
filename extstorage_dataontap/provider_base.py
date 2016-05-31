@@ -19,6 +19,10 @@
 import os
 import logging
 import re
+import string
+import glob
+import sys
+import subprocess
 
 from extstorage_dataontap import configuration
 from extstorage_dataontap import exception
@@ -94,6 +98,45 @@ class DataOnTapProviderBase(object):
         """Clone an existing Lun"""
         raise NotImplementedError()
 
+    def _run_cmds(self, commands, fatal=True):
+        """Run commands"""
+
+        for cmd in commands:
+            LOG.info('Running command: "%s"', '" "'.join(cmd))
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE)
+            output, error = process.communicate()
+            if process.returncode != 0:
+                LOG.error("Command: %s failed!.\nSTDOUT: %s\nSTDERR: %s",
+                          " ".join(cmd), output, error)
+                if fatal:
+                    raise exception.Error("Command: %s failed", " ".join(cmd))
+            LOG.debug('STDOUT: %s\nSTDERR: %s', output, error)
+
+    def _get_lun_device(self, name):
+        """Returns the LUN's block device if mapped on the host"""
+        f = string.Formatter()
+        fields = [i[1] for i in f.parse(configuration.LUN_DEVICE_PATH_FORMAT)]
+
+        d = dict.fromkeys(fields, '*')
+        d["name"] = name
+
+        files = glob.glob(configuration.LUN_DEVICE_PATH_FORMAT.format(**d))
+        if len(files) == 0:
+            LOG.warning("Device for LUN %s is not present in the host.", name)
+            LOG.info("Running device mapping commands")
+            self._run_cmds(configuration.LUN_ATTACH_COMMANDS)
+            files = glob.glob(configuration.LUN_DEVICE_PATH_FORMAT.format(**d))
+            pass
+
+        assert len(files) < 2, "Multiple devices with name: `%s' found" % name
+
+        if len(files) == 1:
+            LOG.debug("Found device file: %s for LUN %s", files[0], name)
+            return files[0]
+        LOG.debug("Device for LUN %s not present after scanning", name)
+        return None
+
     def create(self):
         """Driver's entry point for the create script"""
         lun_name = os.getenv('VOL_NAME')
@@ -123,10 +166,27 @@ class DataOnTapProviderBase(object):
 
     def attach(self):
         """Driver's entry point for the attach script"""
+        lun_name = os.getenv('VOL_NAME')
+
+        assert lun_name is not None, "missing VOL_NAME parameter"
+
+        device = self._get_lun_device(lun_name)
+
+        if device:
+            sys.stdout.write(device)
+        else:
+            LOG.error("Could not attach device for LUN %s", lun_name)
+            return 1
+
         return 0
 
     def detach(self):
         """Driver's entry point for the detach script"""
+        lun_name = os.getenv('VOL_NAME')
+
+        assert lun_name is not None, "missing VOL_NAME parameter"
+        self._run_cmds(configuration.LUN_DETACH_COMMANDS)
+
         return 0
 
     def remove(self):

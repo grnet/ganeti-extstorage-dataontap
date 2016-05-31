@@ -91,3 +91,18 @@ POOL = "vol0"
 # If this option is set, the LUN will be mapped to the specified initiator
 # group upon creation.
 IGROUP = None
+
+# This pattern defines the path we expect a LUN to find under
+LUN_DEVICE_PATH_FORMAT = "/dev/disk/{hostname}/{pool}/{name}"
+
+# Commands to run to attach the LUN to a host.
+# Warning: This option is a tuple of tuples (or a list of lists). To create an
+# empty tuple use (). To create a list with a single command with no args,
+# specify it like this:(("cmd",),)
+LUN_ATTACH_COMMANDS = (("iscsiadm", "-m", "node", "-R"), ("multipath", "-r"))
+
+# Commands to run to detaching the LUN from a host.
+# Warning: This option is a tuple of tuples (or a list of lists). To create an
+# empty tuple use (). To create a tuple with a single command with no args,
+# specify it like this:(("cmd",),)
+LUN_DETACH_COMMANDS = ()

@@ -20,6 +20,7 @@ access the settings by importing this one."""
 import os
 import sys
 import re
+import string
 
 from functools import partial
 from extstorage_dataontap import exception
@@ -108,6 +109,33 @@ def _match(pattern):
     return partial(inner, pattern=pattern)
 
 
+def _is_format_string(val):
+    fields = [i[1] for i in string.Formatter().parse(val)]
+    if 'name' not in fields:
+        raise ValueError("Field: `name' missing from format string: %s" % val)
+
+
+def _is_list(val):
+    if not (isinstance(val, tuple) or isinstance(val, list)):
+        raise ValueError("Not a list or tuple (%s)" % type(val))
+
+
+def _is_list_of_string_lists(val):
+    _is_list(val)
+    for i in val:
+        try:
+            _is_list(i)
+        except ValueError as e:
+            raise ValueError("Error in item %r: %s" % (i, e.message))
+        if len(i) == 0:
+            raise ValueError("Error in item %r: List is empty" % (i,))
+        for j in i:
+            try:
+                _is_nonempty_string(j)
+            except ValueError as e:
+                raise ValueError("Error in item %r: %s" % (i, e.message))
+
+
 # Validate the configuration
 if STORAGE_FAMILY == 'ontap_cluster':
     # Not usable in cluster mode
@@ -127,3 +155,6 @@ _check_val('LUN_SPACE_RESERVATION', _is_bool)
 _check_val('POOL_NAME_SEARCH_PATTERN', _is_regexp)
 _check_val('LUN_OSTYPE', _is_in((OSTYPES)))
 _check_val('POOL', _match(POOL_NAME_SEARCH_PATTERN))
+_check_val('LUN_DEVICE_PATH_FORMAT', _is_format_string)
+_check_val('LUN_ATTACH_COMMANDS', _is_list_of_string_lists)
+_check_val('LUN_DETACH_COMMANDS', _is_list_of_string_lists)
