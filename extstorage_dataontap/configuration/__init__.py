@@ -34,9 +34,10 @@ OSTYPES = ('solaris', 'windows', 'hpux', 'aix', 'linux', 'netware', 'vmware',
            'windows_gpt', 'windows_2008', 'xen', 'hyper_v', 'solaris_efi',
            'openvms')
 
-for var in [i for i in os.environ if i.startswith('EXTP_')]:
-    value = os.environ[var] if len(os.environ[var]) else None
-    setattr(sys.modules[__name__], var[5:], value)
+TRUE_REGEXP = re.compile("^(yes|true|on|1|set)$", re.IGNORECASE)
+FALSE_REGEXP = re.compile("^(no|false|off|0|unset)$", re.IGNORECASE)
+BOOL_REGEXP = re.compile("%s|%s" % (TRUE_REGEXP.pattern[:-2],
+                                    FALSE_REGEXP.pattern[2:]), re.IGNORECASE)
 
 if os.path.exists(CONFIG):
     try:
@@ -44,6 +45,10 @@ if os.path.exists(CONFIG):
     except Exception as e:
         raise exception.InvalidConfigurationFile(filename=CONFIG,
                                                  reason=str(e))
+
+for var in [i for i in os.environ if i.startswith('EXTP_')]:
+    value = os.environ[var] if len(os.environ[var]) else None
+    setattr(sys.modules[__name__], var[5:], value)
 
 
 def _check_val(key, check):
@@ -53,6 +58,15 @@ def _check_val(key, check):
     except ValueError as e:
         raise exception.InvalidConfigurationValue(option=key, value=val,
                                                   reason=e.message)
+
+    def set_bool(val):
+        if isinstance(val, bool):
+            return val
+        return True if TRUE_REGEXP.match(val) else False
+
+    # Fix boolean values
+    if check == _is_bool:
+        setattr(sys.modules[__name__], key, set_bool(val))
 
 
 def _is_in(val_set):
@@ -90,8 +104,16 @@ def _is_float(val):
 
 
 def _is_bool(val):
-    if not isinstance(val, bool):
+    if not (isinstance(val, bool) or
+            isinstance(val, str) or isinstance(val, unicode)):
         raise ValueError("Not a boolean value (%s)" % type(val))
+
+    # Since some boolean values may be provided by environment variables, we
+    # need to allow some strings like yes, no, true, set...
+    if (isinstance(val, str) or isinstance(val, unicode)):
+        if not BOOL_REGEXP.match(val):
+            raise ValueError("Allowed values are %s" %
+                             BOOL_REGEXP.pattern[1:-1])
 
 
 def _is_regexp(val):
