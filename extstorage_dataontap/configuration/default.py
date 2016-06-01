@@ -74,8 +74,10 @@ SEVEN_MODE_PARTNER_BACKEND_NAME = None
 
 # This option defines the type of operating system that will access a LUN
 # exported from Data ONTAP; it is assigned to the LUN at the time it is
-# created.
-LUN_OSTYPE = None
+# created. Valid values for this field are: 'solaris', 'windows', 'hpux',
+# 'aix', 'linux', 'netware', 'vmware', 'windows_gpt', 'windows_2008', 'xen',
+# 'hyper_v', 'solaris_efi', 'openvms'
+LUN_OSTYPE = 'linux'
 
 # This option is used to restrict provisioning to the specified pools. Specify
 # the value of this option to be a regular expression which will be applied to
