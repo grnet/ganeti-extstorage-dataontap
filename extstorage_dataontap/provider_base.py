@@ -118,19 +118,14 @@ class DataOnTapProviderBase(object):
         f = string.Formatter()
         fields = [i[1] for i in f.parse(configuration.LUN_DEVICE_PATH_FORMAT)]
 
+        LOG.info("Running device mapping commands")
+        self._run_cmds(configuration.LUN_ATTACH_COMMANDS)
+
         d = dict.fromkeys(fields, '*')
         d["name"] = name
 
         files = glob.glob(configuration.LUN_DEVICE_PATH_FORMAT.format(**d))
-        if len(files) == 0:
-            LOG.warning("Device for LUN %s is not present in the host.", name)
-            LOG.info("Running device mapping commands")
-            self._run_cmds(configuration.LUN_ATTACH_COMMANDS)
-            files = glob.glob(configuration.LUN_DEVICE_PATH_FORMAT.format(**d))
-            pass
-
         assert len(files) < 2, "Multiple devices with name: `%s' found" % name
-
         if len(files) == 1:
             LOG.debug("Found device file: %s for LUN %s", files[0], name)
             return files[0]
