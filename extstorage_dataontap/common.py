@@ -21,12 +21,21 @@ from functools import partial
 
 from extstorage_dataontap import configuration
 
-ch = logging.StreamHandler(sys.stderr)
-formatter = logging.Formatter("%(asctime)-15s [%(levelname)s] %(message)s")
-ch.setFormatter(formatter)
 LOG = logging.getLogger()
-LOG.addHandler(ch)
 LOG.setLevel(logging.DEBUG if configuration.DEBUG else logging.INFO)
+formatter = logging.Formatter("%(asctime)-15s [%(levelname)s] %(message)s")
+
+# Ganeti will log this
+sh = logging.StreamHandler(sys.stderr)
+sh.setFormatter(formatter)
+LOG.addHandler(sh)
+
+# This is logged directly by the client
+if configuration.LOG:
+    fh = logging.FileHandler(configuration.LOG)
+    fh.setFormatter(formatter)
+    LOG.addHandler(fh)
+
 
 if configuration.STORAGE_FAMILY == 'ontap_cluster':
     from extstorage_dataontap.provider_cmode import DataOnTapProvider

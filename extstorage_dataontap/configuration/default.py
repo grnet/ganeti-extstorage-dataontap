@@ -18,6 +18,11 @@
 # If set, debug info will be printed
 DEBUG = False
 
+# Log on this file. Ganeti will log everything that is printed to stderr for
+# most of the commands, but not attach. This file will have a complete log of
+# the provider. If you don't need this, then set it to None
+LOG = '/var/log/extstorage_dataontap.log'
+
 # The storage family type used on the storage system;
 # valid values are ontap_7mode for using Data ONTAP operating in 7-Mode and
 # ontap_cluster for using clustered Data ONTAP
