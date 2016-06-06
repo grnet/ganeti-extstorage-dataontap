@@ -21,7 +21,7 @@ from setuptools.command.easy_install import log
 import sys
 import os
 
-from extstorage_dataontap.version import __version__
+from extstorage_dataontap import version
 
 # Overload the install command to copy the parameters.list in the installation
 # directory. We use this instead of adding scripts=['parameter.list'] in the
@@ -46,7 +46,7 @@ class install(_install):
 
 setup(
     name='extstorage_dataontap',
-    version="0.1",
+    version=version,
     description="Ganeti ExtStorage Provider for NetApp's Data ONTAP",
     packages=find_packages(),
     include_package_data=True,

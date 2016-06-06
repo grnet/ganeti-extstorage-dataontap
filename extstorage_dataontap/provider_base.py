@@ -140,6 +140,8 @@ class DataOnTapProviderBase(object):
         assert lun_name is not None, "missing VOL_NAME parameter"
         assert size is not None, "missing VOL_SIZE parameter"
 
+        LOG.info("Creating volume %s with size %s mebibytes", lun_name, size)
+
         exists = self._get_lun_by_name(lun_name)
         if exists is not None:
             raise exception.VolumeExists(name=exists.name,
@@ -165,9 +167,12 @@ class DataOnTapProviderBase(object):
 
         assert lun_name is not None, "missing VOL_NAME parameter"
 
+        LOG.info("Attaching volume %s", lun_name)
+
         device = self._get_lun_device(lun_name)
 
         if device:
+            LOG.debug("Outputing: %s", device)
             sys.stdout.write(device)
         else:
             LOG.error("Could not attach device for LUN %s", lun_name)
@@ -180,6 +185,9 @@ class DataOnTapProviderBase(object):
         lun_name = os.getenv('VOL_NAME')
 
         assert lun_name is not None, "missing VOL_NAME parameter"
+
+        LOG.info("Detaching volume %s", lun_name)
+
         self._run_cmds(configuration.LUN_DETACH_COMMANDS)
 
         return 0
@@ -189,6 +197,8 @@ class DataOnTapProviderBase(object):
         lun_name = os.getenv('VOL_NAME')
 
         assert lun_name is not None, "missing VOL_NAME parameter"
+
+        LOG.info("Removing volume %s", lun_name)
 
         lun = self._get_lun_by_name(lun_name)
         if lun is None:
@@ -205,6 +215,8 @@ class DataOnTapProviderBase(object):
         assert lun_name is not None, "missing VOL_NAME parameter"
         assert size is not None, "missing VOL_NEW_SIZE parameter"
 
+        LOG.info("Growing volume %s to %s mebibytes", lun_name, size)
+
         size = int(size) * (1024 ** 2)  # Size was in mebibytes
 
         lun = self._get_lun_by_name(lun_name)
@@ -216,10 +228,22 @@ class DataOnTapProviderBase(object):
 
     def setinfo(self):
         """Driver's entry point for the setinfo script"""
+        lun_name = os.getenv("VOL_NAME")
+        metadata = os.getenv("VOL_METADATA")
+
+        assert lun_name is not None, "missing VOL_NAME parameter"
+        assert metadata is not None, "missing VOL_METADATA parameter"
+
+        LOG.info("Setting metadata for volume %s: %s", lun_name,
+                 metadata)
+        LOG.warning("Metadata setting mechanism is not implemented")
+
         return 0
 
     def verify(self):
         """Driver's entry point for the verify script"""
+        LOG.info("Verify script called")
+
         return 0
 
     def snapshot(self):
@@ -234,6 +258,8 @@ class DataOnTapProviderBase(object):
         assert new_name is not None, "missing VOL_SNAPSHOT_NAME parameter"
         # assert size is not None, "missing VOL_SNAPSHOT_SIZE parameter"
 
+        LOG.info("Snapshoting %s to %s", lun_name, new_name)
+
         # size = int(size) * (1024 ** 2)  # Size was in mebibytes
 
         lun = self._get_lun_by_name(lun_name)
@@ -245,8 +271,20 @@ class DataOnTapProviderBase(object):
 
     def open(self):
         """Driver's entry point for the open script"""
+        lun_name = os.getenv('VOL_NAME')
+
+        assert lun_name is not None, "missing VOL_NAME parameter"
+
+        LOG.info("Opening volume %s", lun_name)
+
         return 0
 
     def close(self):
         """Driver's entry point for the close script"""
+        lun_name = os.getenv('VOL_NAME')
+
+        assert lun_name is not None, "missing VOL_NAME parameter"
+
+        LOG.info("Closing volume %s", lun_name)
+
         return 0

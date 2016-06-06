@@ -14,4 +14,4 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from extstorage_dataontap.version import __version__
+from extstorage_dataontap.version import __version__ as version  # noqa
