@@ -139,6 +139,7 @@ class DataOnTapProviderBase(object):
 
         assert lun_name is not None, "missing VOL_NAME parameter"
         assert size is not None, "missing VOL_SIZE parameter"
+        assert self.igroup is not None, "igroup is not set"
 
         LOG.info("Creating volume %s with size %s mebibytes", lun_name, size)
 
@@ -156,8 +157,9 @@ class DataOnTapProviderBase(object):
 
         self.client.create_lun(self.pool_name, lun_name, size, metadata, None)
 
-        if self.igroup:
-            self.client.map_lun(metadata['Path'], self.igroup)
+        LOG.info("create: Mapping volume %s to igroup %s",
+                 lun_name, self.igroup)
+        self.client.map_lun(metadata['Path'], self.igroup)
 
         return 0
 

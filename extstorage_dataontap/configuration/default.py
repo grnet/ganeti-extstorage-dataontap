@@ -95,8 +95,7 @@ POOL_NAME_SEARCH_PATTERN = "(.+)"
 # the LUNs on.
 POOL = "vol0"
 
-# If this option is set, the LUN will be mapped to the specified initiator
-# group upon creation.
+# Map the LUN to the specified initiator group upon creation.
 IGROUP = None
 
 # This pattern defines the path we expect a LUN to find under
