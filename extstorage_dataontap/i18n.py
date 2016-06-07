@@ -14,6 +14,8 @@
 
 """dummy wrapper for the olso.i18n module"""
 
+# flake8: noqa
+
 _ = lambda x: x
 _LI = lambda x: x
 _LW = lambda x: x

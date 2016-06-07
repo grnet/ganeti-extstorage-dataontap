@@ -43,7 +43,7 @@ class NetAppLun(object):
         self.name = name
         self.size = size
         self.metadata = metadata or {}
-        print metadata
+        LOG.debug(str(self))
 
     def get_metadata_property(self, prop):
         """Get the metadata property of a LUN."""
@@ -54,8 +54,8 @@ class NetAppLun(object):
                   {'prop': prop, 'name': name})
 
     def __str__(self, *args, **kwargs):
-        return 'NetApp LUN [handle:%s, name:%s, size:%s, metadata:%s]' % (
-               self.handle, self.name, self.size, self.metadata)
+        return 'NetApp LUN [name:%s, size:%s, metadata:%s]' % (
+            self.name, self.size, self.metadata)
 
 
 class DataOnTapProviderBase(object):
@@ -75,7 +75,9 @@ class DataOnTapProviderBase(object):
     @property
     def client(self):
         if not self._client:
+            LOG.info("Initializing NetApp client")
             self._client = self._client_setup()
+            LOG.info("NetApp initialization finished")
         return self._client
 
     def _client_setup(self):
@@ -89,7 +91,9 @@ class DataOnTapProviderBase(object):
     def _get_lun_by_name(self, name):
         """Fetch a lun by name"""
 
+        LOG.debug("Calling get_lun_by_args(path='/vol/*/%s')", name)
         lun_list = self.client.get_lun_by_args(path='/vol/*/%s' % name)
+        LOG.debug("LUNs returned: %r", lun_list)
 
         assert len(lun_list) < 2, "Multiple LUNs found with name: `%s'" % name
 
@@ -183,10 +187,12 @@ class DataOnTapProviderBase(object):
             'SpaceReserved': self.space_reserved,
             'Path': '/vol/%s/%s' % (self.pool_name, lun_name)}
 
+        LOG.debug("Calling create_lun(%s, %s, %d, %r, None)",
+                  self.pool_name, lun_name, size, metadata)
         self.client.create_lun(self.pool_name, lun_name, size, metadata, None)
 
-        LOG.info("create: Mapping volume %s to igroup %s",
-                 lun_name, self.igroup)
+        LOG.info("Mapping volume %s to igroup %s", lun_name, self.igroup)
+        LOG.debug("Calling map_lun(%s, %s)", metadata['Path'], self.igroup)
         self.client.map_lun(metadata['Path'], self.igroup)
 
         return 0
@@ -234,6 +240,7 @@ class DataOnTapProviderBase(object):
         if lun is None:
             raise exception.VolumeNotFound(volume_id=lun_name)
 
+        LOG.debug("Calling destroy_lun(%s)", lun.metadata['Path'])
         self.client.destroy_lun(lun.metadata['Path'])
         return 0
 
@@ -253,6 +260,8 @@ class DataOnTapProviderBase(object):
         if lun is None:
             raise exception.VolumeNotFound(volume_id=lun_name)
 
+        LOG.debug("Calling do_direct_resize(%s, %d)",
+                  lun.metadata['Path'], size)
         self.client.do_direct_resize(lun.metadata['Path'], size)
         return 0
 

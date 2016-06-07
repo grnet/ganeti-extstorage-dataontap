@@ -14,9 +14,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
+
 from extstorage_dataontap import configuration
 from extstorage_dataontap.provider_base import DataOnTapProviderBase
 from extstorage_dataontap.client.client_7mode import Client
+
+LOG = logging.getLogger(__name__)
 
 
 class DataOnTapProvider(DataOnTapProviderBase):
@@ -34,6 +38,7 @@ class DataOnTapProvider(DataOnTapProviderBase):
 
     def _create_lun_meta(self, lun):
         """Creates LUN metadata dictionary."""
+        LOG.debug("Calling check_is_naelement(%s)", lun)
         self.client.check_is_naelement(lun)
         meta_dict = {}
         meta_dict['Path'] = lun.get_child_content('path')
@@ -50,6 +55,8 @@ class DataOnTapProvider(DataOnTapProviderBase):
         path = lun.metadata['Path']
         clone_path = "%s/%s" % (path.rpartition('/')[0], new_name)
 
+        LOG.debug("Calling clone_lun(%s, %s, %s, %s, %s)", path, clone_path,
+                  lun.name, new_name, self.space_reserved)
         self.client.clone_lun(path, clone_path, lun.name, new_name,
                               self.space_reserved)
 

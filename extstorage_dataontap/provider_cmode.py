@@ -15,9 +15,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
+
 from extstorage_dataontap import configuration
 from extstorage_dataontap.provider_base import DataOnTapProviderBase
 from extstorage_dataontap.client.client_cmode import Client
+
+LOG = logging.getLogger(__name__)
 
 
 class DataOnTapProvider(DataOnTapProviderBase):
@@ -52,6 +56,8 @@ class DataOnTapProvider(DataOnTapProviderBase):
         """Clone an existing Lun"""
 
         volume = lun.metadata['Volume']
+        LOG.debug("Calling clone_lun(%s, %s, %s, %s)", volume, lun.name,
+                  new_name, self.space_reserved)
         self.client.clone_lun(volume, lun.name, new_name, self.space_reserved)
 
 # vim: set sta sts=4 shiftwidth=4 sw=4 et ai :
