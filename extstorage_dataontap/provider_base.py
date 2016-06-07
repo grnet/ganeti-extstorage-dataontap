@@ -23,11 +23,17 @@ import string
 import glob
 import sys
 import subprocess
+import time
 
 from extstorage_dataontap import configuration
 from extstorage_dataontap import exception
 
 LOG = logging.getLogger(__name__)
+
+# Time to wait before retrying in seconds
+WAIT = 1
+# Maximum number of retries
+MAX_RETRIES = 5
 
 
 class NetAppLun(object):
@@ -121,15 +127,37 @@ class DataOnTapProviderBase(object):
         LOG.info("Running device mapping commands")
         self._run_cmds(configuration.LUN_ATTACH_COMMANDS)
 
+        # We use globbing to search for files. Replace all fields of the
+        # LUN_DEVICE_PATH_FORMAT but the name with '*'
         d = dict.fromkeys(fields, '*')
         d["name"] = name
+        pattern = configuration.LUN_DEVICE_PATH_FORMAT.format(**d)
 
-        files = glob.glob(configuration.LUN_DEVICE_PATH_FORMAT.format(**d))
-        assert len(files) < 2, "Multiple devices with name: `%s' found" % name
-        if len(files) == 1:
-            LOG.debug("Found device file: %s for LUN %s", files[0], name)
-            return files[0]
-        LOG.debug("Device for LUN %s not present after scanning", name)
+        LOG.info("Scanning file system for %s", pattern)
+        # If the file we are searching for is created by a udev rule triggered
+        # by one of the mapping commands, then a race condition may occur. We
+        # could use "udevadm settle" which watches the udev event queue, and
+        # exits if all current events are handled to overcome this, but I've
+        # seen this command block without respecting the timeout. It's better
+        # if we don't use it here. The user should put it in the list of attach
+        # commands if needed. Just to be on the safe side, better wait for a
+        # while and retry the search if the file is not found.
+        for i in xrange(MAX_RETRIES):
+            files = glob.glob(pattern)
+            LOG.debug("Device files found for LUN %s: %s", name,
+                      ", ".join(files))
+            if len(files) > 2:
+                raise exception.Error("Multiple devices found with name %s",
+                                      name)
+            elif len(files) == 1:
+                return files[0]
+
+            if i < MAX_RETRIES - 1:
+                LOG.warning("Device for LUN %s not found. Retrying after "
+                            "sleeping for %d seconds", name, WAIT)
+                time.sleep(WAIT)
+
+        LOG.warning("Device for LUN %s not found after scanning", name)
         return None
 
     def create(self):
