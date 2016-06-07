@@ -52,8 +52,12 @@ def main(action):
         LOG.addHandler(sh)
 
     LOG.info("Running Data ONTAP ExtStorage Provider v%s", version)
-    provider = DataOnTapProvider()
-    return getattr(provider, action)()
+    try:
+        provider = DataOnTapProvider()
+        return getattr(provider, action)()
+    except Exception:
+        LOG.exception("action: %s failed", action)
+        return 2
 
 
 # Available ExtStorage actions
