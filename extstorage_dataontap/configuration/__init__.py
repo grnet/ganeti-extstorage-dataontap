@@ -180,3 +180,5 @@ _check_val('POOL', _match(POOL_NAME_SEARCH_PATTERN))
 _check_val('LUN_DEVICE_PATH_FORMAT', _is_format_string)
 _check_val('LUN_ATTACH_COMMANDS', _is_list_of_string_lists)
 _check_val('LUN_DETACH_COMMANDS', _is_list_of_string_lists)
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

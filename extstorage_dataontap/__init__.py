@@ -15,3 +15,5 @@
 #    under the License.
 
 from extstorage_dataontap.version import __version__ as version  # noqa
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

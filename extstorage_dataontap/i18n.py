@@ -19,3 +19,5 @@ _LI = lambda x: x
 _LW = lambda x: x
 _LE = lambda x: x
 _LC = lambda x: x
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

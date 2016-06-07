@@ -52,3 +52,5 @@ class DataOnTapProvider(DataOnTapProviderBase):
 
         self.client.clone_lun(path, clone_path, lun.name, new_name,
                               self.space_reserved)
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

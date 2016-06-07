@@ -415,3 +415,5 @@ class Client(client_base.Client):
             flexvol_info.get_child_content('size-available'))
 
         return total_bytes, available_bytes
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

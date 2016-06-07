@@ -62,3 +62,5 @@ actions = ['create', 'attach', 'detach', 'remove', 'grow', 'setinfo', 'verify',
 
 for action in actions:
     setattr(sys.modules[__name__], action, partial(main, action=action))
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

@@ -53,3 +53,5 @@ class DataOnTapProvider(DataOnTapProviderBase):
 
         volume = lun.metadata['Volume']
         self.client.clone_lun(volume, lun.name, new_name, self.space_reserved)
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

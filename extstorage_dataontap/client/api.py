@@ -624,3 +624,5 @@ def create_api_request(api_name, query=None, des_result=None,
     if tag:
         api_el.add_new_child('tag', tag, True)
     return api_el
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

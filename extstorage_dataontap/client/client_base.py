@@ -343,3 +343,5 @@ class Client(object):
                 LOG.warning(_LW("Failed to invoke ems. Message : %s"), e)
             finally:
                 requester.last_ems = utils.utcnow()
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

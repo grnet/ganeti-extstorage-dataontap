@@ -112,3 +112,5 @@ LUN_ATTACH_COMMANDS = (("iscsiadm", "-m", "node", "-R"), ("multipath", "-r"))
 # empty tuple use (). To create a tuple with a single command with no args,
 # specify it like this:(("cmd",),)
 LUN_DETACH_COMMANDS = ()
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

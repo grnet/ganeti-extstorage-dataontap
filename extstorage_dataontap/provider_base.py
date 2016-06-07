@@ -290,3 +290,5 @@ class DataOnTapProviderBase(object):
         LOG.info("Closing volume %s", lun_name)
 
         return 0
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :
