@@ -22,8 +22,8 @@ import re
 import string
 import glob
 import sys
-import subprocess
 import time
+import socket
 
 from extstorage_dataontap import configuration
 from extstorage_dataontap import exception
@@ -108,28 +108,10 @@ class DataOnTapProviderBase(object):
         """Clone an existing Lun"""
         raise NotImplementedError()
 
-    def _run_cmds(self, commands, fatal=True):
-        """Run commands"""
-
-        for cmd in commands:
-            LOG.info('Running command: "%s"', '" "'.join(cmd))
-            process = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE)
-            output, error = process.communicate()
-            if process.returncode != 0:
-                LOG.error("Command: %s failed!.\nSTDOUT: %s\nSTDERR: %s",
-                          " ".join(cmd), output, error)
-                if fatal:
-                    raise exception.Error("Command: %s failed", " ".join(cmd))
-            LOG.debug('STDOUT: %s\nSTDERR: %s', output, error)
-
     def _get_lun_device(self, name):
         """Returns the LUN's block device if mapped on the host"""
         f = string.Formatter()
         fields = [i[1] for i in f.parse(configuration.LUN_DEVICE_PATH_FORMAT)]
-
-        LOG.info("Running device mapping commands")
-        self._run_cmds(configuration.LUN_ATTACH_COMMANDS)
 
         # We use globbing to search for files. Replace all fields of the
         # LUN_DEVICE_PATH_FORMAT but the name with '*'
@@ -137,7 +119,31 @@ class DataOnTapProviderBase(object):
         d["name"] = name
         pattern = configuration.LUN_DEVICE_PATH_FORMAT.format(**d)
 
+        def find_device():
+            """Find device path matching a specified pattern"""
+
+            files = glob.glob(pattern)
+            LOG.debug("Device files found for LUN %s: %s", name,
+                      ", ".join(files))
+            if len(files) > 2:
+                raise exception.Error("Multiple devices found with name %s",
+                                      name)
+            elif len(files) == 1:
+                return files[0]
+
+            # Not found
+            return None
+
         LOG.info("Scanning file system for %s", pattern)
+        device = find_device()
+        if device:
+            # If the device is present, there is no need to run the attach
+            # commands
+            return device
+        else:
+            LOG.info("Device not found. Running device mapping commands")
+            configuration.run_cmds(configuration.LUN_ATTACH_COMMANDS)
+
         # If the file we are searching for is created by a udev rule triggered
         # by one of the mapping commands, then a race condition may occur. We
         # could use "udevadm settle" which watches the udev event queue, and
@@ -147,14 +153,9 @@ class DataOnTapProviderBase(object):
         # commands if needed. Just to be on the safe side, better wait for a
         # while and retry the search if the file is not found.
         for i in xrange(MAX_RETRIES):
-            files = glob.glob(pattern)
-            LOG.debug("Device files found for LUN %s: %s", name,
-                      ", ".join(files))
-            if len(files) > 2:
-                raise exception.Error("Multiple devices found with name %s",
-                                      name)
-            elif len(files) == 1:
-                return files[0]
+            device = find_device()
+            if device:
+                return device
 
             if i < MAX_RETRIES - 1:
                 LOG.warning("Device for LUN %s not found. Retrying after "
@@ -206,7 +207,6 @@ class DataOnTapProviderBase(object):
         LOG.info("Attaching volume %s", lun_name)
 
         device = self._get_lun_device(lun_name)
-
         if device:
             LOG.debug("Outputing: %s", device)
             sys.stdout.write(device)
@@ -224,7 +224,7 @@ class DataOnTapProviderBase(object):
 
         LOG.info("Detaching volume %s", lun_name)
 
-        self._run_cmds(configuration.LUN_DETACH_COMMANDS)
+        configuration.run_cmds(configuration.LUN_DETACH_COMMANDS)
 
         return 0
 
@@ -263,6 +263,11 @@ class DataOnTapProviderBase(object):
         LOG.debug("Calling do_direct_resize(%s, %d)",
                   lun.metadata['Path'], size)
         self.client.do_direct_resize(lun.metadata['Path'], size)
+
+        # Rerun the attach commands. This is needed because attach will run the
+        # commands only if the device is not present. After growing, the device
+        # may be present and have wrong size.
+        configuration.run_cmds(configuration.LUN_ATTACH_COMMANDS)
         return 0
 
     def setinfo(self):
@@ -326,6 +331,43 @@ class DataOnTapProviderBase(object):
 
         LOG.info("Closing volume %s", lun_name)
 
+        return 0
+
+    def pre_migrate(self):
+        """Driver's entry point for the pre migration hook"""
+
+        instance = os.getenv('GANETI_INSTANCE_NAME')
+        disk_template = os.getenv('GANETI_INSTANCE_DISK_TEMPLATE')
+        new_primary = os.getenv('GANETI_NEW_PRIMARY')
+
+        assert instance is not None, \
+            "missing GANETI_INSTANCE_NAME from the environment"
+        assert disk_template is not None, \
+            "missing GANETI_INSTANCE_DISK_TEMPLATE from the environment"
+        assert new_primary is not None, \
+            "missing GANETI_NEW_PRIMARY from the environment"
+
+        LOG.debug("Storage type for instance %s: %s", instance, disk_template)
+
+        # Run the hook only if the disk template of the instance is ext.
+        if disk_template != 'ext':
+            LOG.warn("Not running this hook for instance %s. Not using an ext"
+                     "(%s) storage type", instance, disk_template)
+            return 0
+
+        # Ganeti expects nodes to have a FQDN
+        node = socket.getfqdn()
+
+        LOG.debug("New primary node: %s", new_primary)
+        LOG.debug("Current node: %s", node)
+
+        # This should run only on the migration target node
+        if new_primary != node:
+            LOG.warn("Not running this hook here because this is not the "
+                     "migration target node.")
+            return 0
+
+        configuration.run_cmds(configuration.LUN_ATTACH_COMMANDS)
         return 0
 
 # vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

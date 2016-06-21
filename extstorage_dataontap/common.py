@@ -35,7 +35,7 @@ def main(action):
 
     # This is logged directly by the client
     if configuration.LOG:
-        fh = logging.FileHandler(configuration.LOG)
+        fh = logging.FileHandler(configuration.LOGFILE)
         formatter = logging.Formatter("%(asctime)-15s [%(levelname)s][" +
                                       action.upper() + "] %(message)s")
         fh.setFormatter(formatter)
@@ -64,7 +64,10 @@ def main(action):
 actions = ['create', 'attach', 'detach', 'remove', 'grow', 'setinfo', 'verify',
            'snapshot', 'open', 'close']
 
-for action in actions:
+# Hooks that need to be added to Ganeti
+hooks = ['pre_migrate']
+
+for action in actions + hooks:
     setattr(sys.modules[__name__], action, partial(main, action=action))
 
 # vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

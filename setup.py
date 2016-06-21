@@ -63,7 +63,8 @@ setup(
             'verify = extstorage_dataontap.common:verify',
             'snapshot = extstorage_dataontap.common:snapshot',
             'open = extstorage_dataontap.common:open',
-            'close = extstorage_dataontap.common:close']},
+            'close = extstorage_dataontap.common:close',
+            'pre-migrate = extstorage_dataontap.common:pre_migrate']},
     classifiers=[
         'Environment :: Console',
         'License :: OSI Approved :: Apache Software License',
