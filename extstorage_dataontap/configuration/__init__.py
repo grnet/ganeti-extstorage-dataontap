@@ -32,7 +32,7 @@ from extstorage_dataontap.configuration.default import *  # noqa
 
 LOG = logging.getLogger(__name__)
 
-CONFIG = '/etc/extstorage_dataontap.conf'
+CONFIG = '/etc/ganeti/extstorage-dataontap.conf'
 OSTYPES = ('solaris', 'windows', 'hpux', 'aix', 'linux', 'netware', 'vmware',
            'windows_gpt', 'windows_2008', 'xen', 'hyper_v', 'solaris_efi',
            'openvms')
