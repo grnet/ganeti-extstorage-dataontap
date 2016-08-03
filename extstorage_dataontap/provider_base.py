@@ -34,6 +34,8 @@ LOG = logging.getLogger(__name__)
 WAIT = 1
 # Maximum number of retries
 MAX_RETRIES = 5
+# Cleanup files directory
+DEVICE_CLEANUP_DIR = '/var/lib/extstorage-dataontap/device-cleanup'
 
 
 class NetAppLun(object):
@@ -66,10 +68,8 @@ class DataOnTapProviderBase(object):
         self._client = None
         self.pool_name = configuration.POOL
         self.ostype = configuration.LUN_OSTYPE
-        self.space_reserved = \
-            str(configuration.LUN_SPACE_RESERVATION).lower()
-        self.pool_regexp = \
-            re.compile(configuration.POOL_NAME_SEARCH_PATTERN)
+        self.space_reserved = str(configuration.LUN_SPACE_RESERVATION).lower()
+        self.pool_regexp = re.compile(configuration.POOL_NAME_SEARCH_PATTERN)
         self.igroup = configuration.IGROUP
 
     @property
@@ -230,10 +230,27 @@ class DataOnTapProviderBase(object):
     def remove(self):
         """Driver's entry point for the remove script"""
         lun_name = os.getenv('VOL_NAME')
+        uuid = os.getenv('VOL_UUID')
 
         assert lun_name is not None, "missing VOL_NAME parameter"
+        assert uuid is not None, "missing VOL_UUID parameter"
 
         LOG.info("Removing volume %s", lun_name)
+
+        # Well, this is a hack but we need to do it. Before removing the LUN,
+        # we need to save the SCSI ID of the device in a file, so the ganeti
+        # cluster node can fetch it to perform a global cluster cleanup.
+        # Theoretically, the node has already removed the device during
+        # detach, but in our case the detach is a NOOP. Since the node has
+        # definitely performed attach in the past before remove, the device
+        # should be there.
+        device = self._search_lun_device(lun_name)
+        if device:
+            scsi = configuration.get_scsi_id(device)
+            with open('%s/%s' % (DEVICE_CLEANUP_DIR, uuid), "w") as f:
+                f.write(scsi)
+        else:
+            LOG.warn("Device for LUN: %s not found on the node!")
 
         lun = self._get_lun_by_name(lun_name)
         if lun is None:

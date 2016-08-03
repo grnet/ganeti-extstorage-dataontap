@@ -211,4 +211,21 @@ def run_cmds(commands, fatal=True):
                 raise exception.Error("Command: %s failed", " ".join(cmd))
         LOG.debug('STDOUT: %s\nSTDERR: %s', output, error)
 
+
+def get_scsi_id(device, fatal=True):
+    """Returns the SCSI ID of a device by executing SCSI_ID_COMMAND as defined
+    in the configuration.
+    """
+    cmd = [x.format(device=device) for x in SCSI_ID_COMMAND]
+    try:
+        scsi_id = subprocess.check_output(cmd)
+        LOG.debug("SCSI ID for %s: %s" % (device, scsi_id))
+    except subprocess.CalledProcessError as e:
+        if fatal:
+            raise e
+        else:
+            LOG.error("Unable to retrieve SCSI ID for device %s" % device)
+            return None
+    return scsi_id
+
 # vim: set sta sts=4 shiftwidth=4 sw=4 et ai :
