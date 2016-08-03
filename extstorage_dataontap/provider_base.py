@@ -74,6 +74,7 @@ class DataOnTapProviderBase(object):
 
     @property
     def client(self):
+        """Initializes the NetApp client"""
         if not self._client:
             LOG.info("Initializing NetApp client")
             self._client = self._client_setup()
@@ -108,34 +109,32 @@ class DataOnTapProviderBase(object):
         """Clone an existing Lun"""
         raise NotImplementedError()
 
-    def _get_lun_device(self, name):
-        """Returns the LUN's block device if mapped on the host"""
+    def _search_lun_device(self, name):
+        """Find device path of a LUN if mapped on the host"""
         f = string.Formatter()
         fields = [i[1] for i in f.parse(configuration.LUN_DEVICE_PATH_FORMAT)]
 
-        # We use globbing to search for files. Replace all fields of the
+        # We use globing to search for files. Replace all fields of the
         # LUN_DEVICE_PATH_FORMAT but the name with '*'
         d = dict.fromkeys(fields, '*')
         d["name"] = name
         pattern = configuration.LUN_DEVICE_PATH_FORMAT.format(**d)
 
-        def find_device():
-            """Find device path matching a specified pattern"""
+        LOG.debug("Scanning file system for %s", pattern)
+        files = glob.glob(pattern)
+        LOG.debug("Device files found for LUN %s: %s", name, ", ".join(files))
+        if len(files) > 2:
+            raise exception.Error("Multiple devices found with name %s", name)
+        elif len(files) == 1:
+            return files[0]
 
-            files = glob.glob(pattern)
-            LOG.debug("Device files found for LUN %s: %s", name,
-                      ", ".join(files))
-            if len(files) > 2:
-                raise exception.Error("Multiple devices found with name %s",
-                                      name)
-            elif len(files) == 1:
-                return files[0]
+        # Not found
+        return None
 
-            # Not found
-            return None
-
-        LOG.info("Scanning file system for %s", pattern)
-        device = find_device()
+    def _get_lun_device(self, name):
+        """Returns the LUN's block device if mapped on the host. Run the attach
+        commands if the device is not present."""
+        device = self._search_lun_device(name)
         if device:
             # If the device is present, there is no need to run the attach
             # commands
@@ -153,7 +152,7 @@ class DataOnTapProviderBase(object):
         # commands if needed. Just to be on the safe side, better wait for a
         # while and retry the search if the file is not found.
         for i in xrange(MAX_RETRIES):
-            device = find_device()
+            device = self._search_lun_device(name)
             if device:
                 return device
 
