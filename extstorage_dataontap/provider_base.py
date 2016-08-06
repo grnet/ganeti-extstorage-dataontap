@@ -24,6 +24,7 @@ import glob
 import sys
 import time
 import socket
+import functools
 
 from extstorage_dataontap import configuration
 from extstorage_dataontap import exception
@@ -36,6 +37,47 @@ WAIT = 1
 MAX_RETRIES = 5
 # Cleanup files directory
 DEVICE_CLEANUP_DIR = '/var/lib/extstorage-dataontap/device-cleanup'
+
+
+def getenv(name):
+    """Get environment variable value or raise error"""
+    value = os.getenv(name)
+    if value is None:
+        raise exception.ExtStorageException(
+            "Missing environment variable %s" % name)
+    return value
+
+
+def map_environ(**vars):
+    """Map environment variables to method arguments"""
+    def wrapper(m):
+        @functools.wraps(m)
+        def wrapped(self):
+            args = {"self": self}
+            for name, env in vars.items():
+                env = env.split(":")
+                assert len(env) == 1 or (len(env) == 2 and env[0] == "list"), \
+                    "Invalid type of environment variable: %s" % ":".join(env)
+                if len(env) == 1:
+                    value = getenv(env[0])
+                else:
+                    # If list:VAR is defined we expect to have environment
+                    # variables of this form present:
+                    # DISK_COUNT = <int> and DISK%d_<value> = ....
+                    # where %d = range(DISK_COUNT)
+                    count = int(getenv("%s_COUNT" % env[1]))
+                    value = []
+                    for i in xrange(count):
+                        value.append({})
+                        prefix = "%s%d_" % (env[1], i)
+                        for j in [x for x in os.environ.keys()
+                                  if x.startswith(prefix)]:
+                            key = j[len(prefix):].lower()
+                            value[i][key] = getenv(j)
+                args[name] = value
+            return m(**args)
+        return wrapped
+    return wrapper
 
 
 class NetAppLun(object):
@@ -164,13 +206,9 @@ class DataOnTapProviderBase(object):
         LOG.warning("Device for LUN %s not found after scanning", name)
         return None
 
-    def create(self):
+    @map_environ(lun_name="VOL_NAME", size="VOL_SIZE")
+    def create(self, lun_name, size):
         """Driver's entry point for the create script"""
-        lun_name = os.getenv('VOL_NAME')
-        size = os.getenv('VOL_SIZE')
-
-        assert lun_name is not None, "missing VOL_NAME parameter"
-        assert size is not None, "missing VOL_SIZE parameter"
         assert self.igroup is not None, "igroup is not set"
 
         LOG.info("Creating volume %s with size %s mebibytes", lun_name, size)
@@ -197,12 +235,9 @@ class DataOnTapProviderBase(object):
 
         return 0
 
-    def attach(self):
+    @map_environ(lun_name="VOL_NAME")
+    def attach(self, lun_name):
         """Driver's entry point for the attach script"""
-        lun_name = os.getenv('VOL_NAME')
-
-        assert lun_name is not None, "missing VOL_NAME parameter"
-
         LOG.info("Attaching volume %s", lun_name)
 
         device = self._get_lun_device(lun_name)
@@ -215,26 +250,18 @@ class DataOnTapProviderBase(object):
 
         return 0
 
-    def detach(self):
+    @map_environ(lun_name="VOL_NAME")
+    def detach(self, lun_name):
         """Driver's entry point for the detach script"""
-        lun_name = os.getenv('VOL_NAME')
-
-        assert lun_name is not None, "missing VOL_NAME parameter"
-
         LOG.info("Detaching volume %s", lun_name)
 
         configuration.run_cmds(configuration.LUN_DETACH_COMMANDS)
 
         return 0
 
-    def remove(self):
+    @map_environ(lun_name="VOL_NAME", uuid="VOL_UUID")
+    def remove(self, lun_name, uuid):
         """Driver's entry point for the remove script"""
-        lun_name = os.getenv('VOL_NAME')
-        uuid = os.getenv('VOL_UUID')
-
-        assert lun_name is not None, "missing VOL_NAME parameter"
-        assert uuid is not None, "missing VOL_UUID parameter"
-
         LOG.info("Removing volume %s", lun_name)
 
         # Well, this is a hack but we need to do it. Before removing the LUN,
@@ -260,14 +287,9 @@ class DataOnTapProviderBase(object):
         self.client.destroy_lun(lun.metadata['Path'])
         return 0
 
-    def grow(self):
+    @map_environ(lun_name="VOL_NAME", size="VOL_NEW_SIZE")
+    def grow(self, lun_name, size):
         """Driver's entry point for the grow script"""
-        lun_name = os.getenv('VOL_NAME')
-        size = os.getenv('VOL_NEW_SIZE')
-
-        assert lun_name is not None, "missing VOL_NAME parameter"
-        assert size is not None, "missing VOL_NEW_SIZE parameter"
-
         LOG.info("Growing volume %s to %s mebibytes", lun_name, size)
 
         size = int(size) * (1024 ** 2)  # Size was in mebibytes
@@ -286,14 +308,9 @@ class DataOnTapProviderBase(object):
         configuration.run_cmds(configuration.LUN_ATTACH_COMMANDS)
         return 0
 
-    def setinfo(self):
+    @map_environ(lun_name="VOL_NAME", metadata="VOL_METADATA")
+    def setinfo(self, lun_name, metadata):
         """Driver's entry point for the setinfo script"""
-        lun_name = os.getenv("VOL_NAME")
-        metadata = os.getenv("VOL_METADATA")
-
-        assert lun_name is not None, "missing VOL_NAME parameter"
-        assert metadata is not None, "missing VOL_METADATA parameter"
-
         LOG.info("Setting metadata for volume %s: %s", lun_name,
                  metadata)
         LOG.warning("Metadata setting mechanism is not implemented")
@@ -306,20 +323,13 @@ class DataOnTapProviderBase(object):
 
         return 0
 
-    def snapshot(self):
+    @map_environ(lun_name="VOL_NAME", new_name="VOL_SNAPSHOT_NAME",
+                 size="VOL_SNAPSHOT_SIZE")
+    def snapshot(self, lun_name, new_name, size):
         """Driver's entry point for the grow script"""
-        lun_name = os.getenv('VOL_NAME')
-        new_name = os.getenv('VOL_SNAPSHOT_NAME')
-
-        # The snapshot size is ignored by the driver
-        # size = os.getenv('VOL_SNAPSHOT_SIZE')
-
-        assert lun_name is not None, "missing VOL_NAME parameter"
-        assert new_name is not None, "missing VOL_SNAPSHOT_NAME parameter"
-        # assert size is not None, "missing VOL_SNAPSHOT_SIZE parameter"
-
         LOG.info("Snapshoting %s to %s", lun_name, new_name)
 
+        # The snapshot size is ignored by the driver
         # size = int(size) * (1024 ** 2)  # Size was in mebibytes
 
         lun = self._get_lun_by_name(lun_name)
@@ -329,40 +339,25 @@ class DataOnTapProviderBase(object):
         self._clone_lun(lun, new_name)
         return 0
 
-    def open(self):
+    @map_environ(lun_name="VOL_NAME")
+    def open(self, lun_name):
         """Driver's entry point for the open script"""
-        lun_name = os.getenv('VOL_NAME')
-
-        assert lun_name is not None, "missing VOL_NAME parameter"
-
         LOG.info("Opening volume %s", lun_name)
 
         return 0
 
-    def close(self):
+    @map_environ(lun_name="VOL_NAME")
+    def close(self, lun_name):
         """Driver's entry point for the close script"""
-        lun_name = os.getenv('VOL_NAME')
-
-        assert lun_name is not None, "missing VOL_NAME parameter"
-
         LOG.info("Closing volume %s", lun_name)
 
         return 0
 
-    def pre_migrate(self):
+    @map_environ(instance="GANETI_INSTANCE_NAME",
+                 disk_template="GANETI_INSTANCE_DISK_TEMPLATE",
+                 new_primary="GANETI_NEW_PRIMARY")
+    def pre_migrate(self, instance, disk_template, new_primary):
         """Driver's entry point for the pre migration hook"""
-
-        instance = os.getenv('GANETI_INSTANCE_NAME')
-        disk_template = os.getenv('GANETI_INSTANCE_DISK_TEMPLATE')
-        new_primary = os.getenv('GANETI_NEW_PRIMARY')
-
-        assert instance is not None, \
-            "missing GANETI_INSTANCE_NAME from the environment"
-        assert disk_template is not None, \
-            "missing GANETI_INSTANCE_DISK_TEMPLATE from the environment"
-        assert new_primary is not None, \
-            "missing GANETI_NEW_PRIMARY from the environment"
-
         LOG.debug("Storage type for instance %s: %s", instance, disk_template)
 
         # Run the hook only if the disk template of the instance is ext.
