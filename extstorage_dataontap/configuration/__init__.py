@@ -228,4 +228,10 @@ def get_scsi_id(device, fatal=True):
             return None
     return scsi_id
 
+
+def get_dev_cleanup_cmd(**kwargs):
+    """Returns the command that should run on each node to cleanup the devices
+    """
+    return [x.format(**kwargs) for x in DEVICE_CLEANUP_COMMAND]
+
 # vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

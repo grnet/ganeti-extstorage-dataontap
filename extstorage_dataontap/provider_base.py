@@ -25,6 +25,7 @@ import sys
 import time
 import socket
 import functools
+import subprocess
 
 from extstorage_dataontap import configuration
 from extstorage_dataontap import exception
@@ -48,13 +49,13 @@ def getenv(name):
     return value
 
 
-def map_environ(**vars):
+def map_environ(**kwargs):
     """Map environment variables to method arguments"""
     def wrapper(m):
         @functools.wraps(m)
         def wrapped(self):
             args = {"self": self}
-            for name, env in vars.items():
+            for name, env in kwargs.items():
                 env = env.split(":")
                 assert len(env) == 1 or (len(env) == 2 and env[0] == "list"), \
                     "Invalid type of environment variable: %s" % ":".join(env)
@@ -76,6 +77,26 @@ def map_environ(**vars):
                             value[i][key] = getenv(j)
                 args[name] = value
             return m(**args)
+        return wrapped
+    return wrapper
+
+
+def run_hook_on_node(name, descr):
+    """Run the decorated function only if this is a specific node"""
+    def wrapper(func):
+        @functools.wraps(func)
+        def wrapped(*args, **kwargs):
+            current = socket.getfqdn()
+            LOG.debug("Current node: %s", current)
+            target = getenv(name)
+            LOG.debug("%s node: %s", descr.capitalize(), target)
+
+            if current == target:
+                return func(*args, **kwargs)
+            else:
+                LOG.warn("Not running this hook here because this is not the "
+                         "%s node: %s", descr, target)
+                return 0
         return wrapped
     return wrapper
 
@@ -353,10 +374,10 @@ class DataOnTapProviderBase(object):
 
         return 0
 
+    @run_hook_on_node(name="GANETI_NEW_PRIMARY", descr="migration target")
     @map_environ(instance="GANETI_INSTANCE_NAME",
-                 disk_template="GANETI_INSTANCE_DISK_TEMPLATE",
-                 new_primary="GANETI_NEW_PRIMARY")
-    def pre_migrate(self, instance, disk_template, new_primary):
+                 disk_template="GANETI_INSTANCE_DISK_TEMPLATE")
+    def pre_migrate(self, instance, disk_template):
         """Driver's entry point for the pre migration hook"""
         LOG.debug("Storage type for instance %s: %s", instance, disk_template)
 
@@ -366,19 +387,61 @@ class DataOnTapProviderBase(object):
                      "(%s) storage type", instance, disk_template)
             return 0
 
-        # Ganeti expects nodes to have a FQDN
-        node = socket.getfqdn()
-
-        LOG.debug("New primary node: %s", new_primary)
-        LOG.debug("Current node: %s", node)
-
-        # This should run only on the migration target node
-        if new_primary != node:
-            LOG.warn("Not running this hook here because this is not the "
-                     "migration target node.")
-            return 0
-
         configuration.run_cmds(configuration.LUN_ATTACH_COMMANDS)
         return 0
+
+    @run_hook_on_node(name="GANETI_MASTER", descr="Ganeti master")
+    @map_environ(node="GANETI_INSTANCE_PRIMARY",
+                 disk_template="GANETI_INSTANCE_DISK_TEMPLATE",
+                 disks="list:GANETI_INSTANCE_DISK")
+    def post_remove(self, node, disk_template, disks):
+        """Driver's entry point for the post remove hook"""
+
+        if disk_template != 'ext':
+            return 0
+
+        def run(*args):
+            """wrapper function for subprocess.check_output()"""
+            LOG.debug("Executing: %s", args)
+            out = subprocess.check_output(args)
+            LOG.debug("Output: %s", out)
+            return out
+
+        for i in range(len(disks)):
+            assert 'uuid' in disks[i]
+            scsi_id_file = "%s/%s" % (DEVICE_CLEANUP_DIR, disks[i]['uuid'])
+            # Get the file hosting the SCSI ID of the device that has been
+            # removed. This file should have been created by the destroy
+            # command
+            out = run('gnt-cluster', 'command', '-M', '--node', node, 'cat',
+                      scsi_id_file)
+            try:
+                rc = int(re.search(r'return code = (\d+)', out).group(1))
+            except AttributeError:
+                LOG.error("Can't find the return code in output: %s", out)
+                return 1
+
+            if rc != 0:
+                LOG.error("Command failed with rc=%d", rc)
+                return 2
+
+            try:
+                scsi_id = re.search(r'%s: (\w+)' % node, out).group(1)
+            except AttributeError:
+                LOG.error("Can't find SCSI ID in output: %s", out)
+                return 3
+
+            # Remove the file after processing
+            run('gnt-cluster', 'command', '-M', '--node', node, 'rm', '-f',
+                scsi_id_file)
+
+            dev_cleanup = configuration.get_dev_cleanup_cmd(scsi_id=scsi_id)
+            if len(dev_cleanup) == 0:
+                continue
+
+            run('gnt-cluster', 'command', " ".join(dev_cleanup))
+
+        return 0
+
 
 # vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

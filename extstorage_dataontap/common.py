@@ -65,7 +65,7 @@ actions = ['create', 'attach', 'detach', 'remove', 'grow', 'setinfo', 'verify',
            'snapshot', 'open', 'close']
 
 # Hooks that need to be added to Ganeti
-hooks = ['pre_migrate']
+hooks = ['pre_migrate', 'post_remove']
 
 for action in actions + hooks:
     setattr(sys.modules[__name__], action, partial(main, action=action))

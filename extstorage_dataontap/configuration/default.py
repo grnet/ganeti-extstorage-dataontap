@@ -114,8 +114,13 @@ LUN_ATTACH_COMMANDS = (("iscsiadm", "-m", "node", "-R"), ("multipath", "-r"),
 # specify it like this:(("cmd",),)
 LUN_DETACH_COMMANDS = ()
 
-# Command that returns the SCSI ID of a device. Use {device} as a placeholder
-# for the actual device path
+# Command in the form of a tuple that returns the SCSI ID of a device. Use
+# {device} as a placeholder for the actual device path
 SCSI_ID_COMMAND = "/lib/udev/scsi_id", "-g", "-d", "{device}"
+
+# Command in the form of a tuple that should be executed on each node after a
+# LUN has been destroyed. Use {scsi_id} as a placeholder for the actual SCSI ID
+# of the device of the LUN
+DEVICE_CLEANUP_COMMAND = ()
 
 # vim: set sta sts=4 shiftwidth=4 sw=4 et ai :
