@@ -9,6 +9,7 @@ override_dh_auto_install:
 	 $(CURDIR)/debian/ganeti-extstorage-dataontap/etc/ganeti/extstorage-dataontap.conf
 	sed -i 's/^[A-Z \t]/# \0/g' $(CURDIR)/debian/ganeti-extstorage-dataontap/etc/ganeti/extstorage-dataontap.conf
 	install -d $(CURDIR)/debian/ganeti-exstorage-dataontap/etc/ganeti/hooks/instance-migrate-pre.d
+	install -d $(CURDIR)/debian/ganeti-exstorage-dataontap/etc/ganeti/hooks/instance-remove-post.d
 
 override_dh_fixperms:
 	dh_fixperms --exclude debian/ganeti-extstorage-dataontap/etc/ganeti/extstorage-dataontap.conf
