@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2014 Clinton Knight. All rights reserved.
 # Copyright (c) 2015 Tom Barron.  All rights reserved.
-# Copyright (c) 2015 GRNET S.A. All rights reserved.
+# Copyright (c) 2015-2016 GRNET S.A. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -334,8 +334,14 @@ class DataOnTapProviderBase(object):
         """Driver's entry point for the setinfo script"""
         LOG.info("Setting metadata for volume %s: %s", lun_name,
                  metadata)
-        LOG.warning("Metadata setting mechanism is not implemented")
 
+        lun = self._get_lun_by_name(lun_name)
+        if lun is None:
+            raise exception.VolumeNotFound(volume_id=lun_name)
+
+        LOG.debug("Calling set_lun_comment(%s, %s)",
+                  lun.metadata['Path'], metadata)
+        self.client.set_lun_comment(lun.metadata['Path'], metadata)
         return 0
 
     def verify(self):
