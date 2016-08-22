@@ -1,6 +1,7 @@
 # Copyright (c) 2014 Alex Meade.  All rights reserved.
 # Copyright (c) 2014 Clinton Knight.  All rights reserved.
 # Copyright (c) 2015 Tom Barron.  All rights reserved.
+# Copyright (c) 2016 GRNET S.A.  All rights reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -140,6 +141,21 @@ class Client(object):
                 pass
             else:
                 six.reraise(*exc_info)
+
+    def set_lun_comment(self, path, comment):
+        """Set comment on LUN"""
+        lun_set_comment = netapp_api.NaElement.create_node_with_children(
+            'lun-set-comment',
+            **{'path': path, 'comment': six.text_type(comment)})
+        try:
+            self.connection.invoke_successfully(lun_set_comment, True)
+        except netapp_api.NaApiError as e:
+            code = e.code
+            message = e.message
+            LOG.warning(_LW('Error adding a comment on LUN. Code :%(code)s, '
+                            'Message: %(message)s'),
+                        {'code': code, 'message': message})
+            raise
 
     def create_igroup(self, igroup, igroup_type='iscsi', os_type='default'):
         """Creates igroup with specified args."""
