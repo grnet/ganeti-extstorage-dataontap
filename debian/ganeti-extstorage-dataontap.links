@@ -1,2 +1,3 @@
 /usr/share/ganeti/extstorage/dataontap/pre-migrate /etc/ganeti/hooks/instance-migrate-pre.d/extstorage-dataontap
+/usr/share/ganeti/extstorage/dataontap/pre-failover /etc/ganeti/hooks/instance-failover-pre.d/extstorage-dataontap
 /usr/share/ganeti/extstorage/dataontap/post-remove /etc/ganeti/hooks/instance-remove-post.d/extstorage-dataontap
