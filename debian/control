@@ -9,7 +9,7 @@ Vcs-Git: https://github.com/grnet/ganeti-extstorage-dataontap
 
 Package: ganeti-extstorage-dataontap
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}
+Depends: ${misc:Depends}, ${python:Depends}, sg3-utils
 Enhances: ganeti
 Description: Ganeti ExtStorage provider for NetApp'a Data ONTAP
  Ganeti ExtStorage provider for NetApp'a Data ONTAP based on the dataontap
