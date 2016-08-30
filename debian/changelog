@@ -1,5 +1,12 @@
+ganeti-extstorage-dataontap (0.1-1~jessie) jessie; urgency=medium
+
+  * New upstream version
+
+ -- Nikos Skalkotos <skalkoto@grnet.gr>  Tue, 30 Aug 2016 17:01:04 +0300
+
 ganeti-extstorage-dataontap (0.0-1~wheezy) wheezy; urgency=low
 
   * Dummy version
 
  -- Nikos Skalkotos <skalkoto@grnet.gr>  Thu, 05 Nov 2015 15:03:37 +0200
+
