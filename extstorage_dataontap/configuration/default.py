@@ -101,18 +101,31 @@ IGROUP = None
 # This pattern defines the path we expect a LUN to find under
 LUN_DEVICE_PATH_FORMAT = "/dev/disk/{hostname}/{pool}/{name}"
 
-# Commands to run to attach the LUN to a host.
+# Commands to run to attach the LUN to a host when iSCSI protocol is used.
 # Warning: This option is a tuple of tuples (or a list of lists). To create an
 # empty tuple use (). To create a list with a single command with no args,
 # specify it like this:(("cmd",),)
-LUN_ATTACH_COMMANDS = (("iscsiadm", "-m", "node", "-R"), ("multipath", "-r"),
-                       ("udevadm", 'settle'))
+ISCSI_ATTACH_COMMANDS = (("iscsiadm", "-m", "node", "-R"), ("multipath", "-r"),
+                         ("udevadm", 'settle'))
 
-# Commands to run to detaching the LUN from a host.
+# Commands to run to detaching the LUN from a host when iSCSI protocol is used.
 # Warning: This option is a tuple of tuples (or a list of lists). To create an
 # empty tuple use (). To create a tuple with a single command with no args,
 # specify it like this:(("cmd",),)
-LUN_DETACH_COMMANDS = ()
+ISCSI_DETACH_COMMANDS = ()
+
+# Commands to run to attach the LUN to a host when FC protocol is used.
+# Warning: This option is a tuple of tuples (or a list of lists). To create an
+# empty tuple use (). To create a list with a single command with no args,
+# specify it like this:(("cmd",),)
+FC_ATTACH_COMMANDS = (("rescan-scsi-bus.sh",), ("multipath", "-r"),
+                      ("udevadm", 'settle'))
+
+# Commands to run to detaching the LUN from a host when FC protocol is used.
+# Warning: This option is a tuple of tuples (or a list of lists). To create an
+# empty tuple use (). To create a tuple with a single command with no args,
+# specify it like this:(("cmd",),)
+FC_DETACH_COMMANDS = ()
 
 # Command in the form of a tuple that returns the SCSI ID of a device. Use
 # {device} as a placeholder for the actual device path

@@ -119,7 +119,7 @@ def _is_bool(val):
 
     # Since some boolean values may be provided by environment variables, we
     # need to allow some strings like yes, no, true, set...
-    if (isinstance(val, str) or isinstance(val, unicode)):
+    if isinstance(val, str) or isinstance(val, unicode):
         if not BOOL_REGEXP.match(val):
             raise ValueError("Allowed values are %s" %
                              BOOL_REGEXP.pattern[1:-1])
@@ -192,8 +192,15 @@ _check_val('POOL_NAME_SEARCH_PATTERN', _is_regexp)
 _check_val('LUN_OSTYPE', _is_in((OSTYPES)))
 _check_val('POOL', _match(POOL_NAME_SEARCH_PATTERN))
 _check_val('LUN_DEVICE_PATH_FORMAT', _is_format_string)
-_check_val('LUN_ATTACH_COMMANDS', _is_list_of_string_lists)
-_check_val('LUN_DETACH_COMMANDS', _is_list_of_string_lists)
+_check_val("%s_ATTACH_COMMANDS" % STORAGE_PROTOCOL.upper(),
+           _is_list_of_string_lists)
+_check_val("%s_DETACH_COMMANDS" % STORAGE_PROTOCOL.upper(),
+           _is_list_of_string_lists)
+
+LUN_ATTACH_COMMANDS = getattr(sys.modules[__name__],
+                              "%s_ATTACH_COMMANDS" % STORAGE_PROTOCOL.upper())
+LUN_DETACH_COMMANDS = getattr(sys.modules[__name__],
+                              "%s_DETACH_COMMANDS" % STORAGE_PROTOCOL.upper())
 
 
 def run_cmds(commands, fatal=True):
