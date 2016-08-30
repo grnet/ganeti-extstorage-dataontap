@@ -64,7 +64,8 @@ setup(
             'snapshot = extstorage_dataontap.common:snapshot',
             'open = extstorage_dataontap.common:open',
             'close = extstorage_dataontap.common:close',
-            'pre-migrate = extstorage_dataontap.common:pre_migrate',
+            'pre-migrate = extstorage_dataontap.common:pre_move',
+            'pre-failover = extstorage_dataontap.common:pre_move',
             'post-remove = extstorage_dataontap.common:post_remove']},
     classifiers=[
         'Environment :: Console',

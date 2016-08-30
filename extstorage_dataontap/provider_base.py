@@ -380,11 +380,11 @@ class DataOnTapProviderBase(object):
 
         return 0
 
-    @run_hook_on_node(name="GANETI_NEW_PRIMARY", descr="migration target")
+    @run_hook_on_node(name="GANETI_NEW_PRIMARY", descr="target")
     @map_environ(instance="GANETI_INSTANCE_NAME",
                  disk_template="GANETI_INSTANCE_DISK_TEMPLATE")
-    def pre_migrate(self, instance, disk_template):
-        """Driver's entry point for the pre migration hook"""
+    def pre_move(self, instance, disk_template):
+        """Driver's entry point for the pre migration/failover hook"""
         LOG.debug("Storage type for instance %s: %s", instance, disk_template)
 
         # Run the hook only if the disk template of the instance is ext.
