@@ -156,3 +156,5 @@ class save_and_reraise_exception(object):
             return False
         if self.reraise:
             six.reraise(self.type_, self.value, self.tb)
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

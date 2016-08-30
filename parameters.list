@@ -1,2 +1,4 @@
-config configuration file to use instead of the default one (/etc/extstorage_dataontap.conf)
-
+pool name of the pool (volume in the Data ONTAP context) to create the LUNs on
+igroup initiator group the LUN will be mapped to
+lun_ostype operating systems that will access the LUN
+lun_space_reservation boolean value that specifies if the storage space is reserved or allocated on demand

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015 GRNET S.A.
+# Copyright (C) 2015-2016 GRNET S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -14,9 +14,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
+
 from extstorage_dataontap import configuration
 from extstorage_dataontap.provider_base import DataOnTapProviderBase
 from extstorage_dataontap.client.client_7mode import Client
+
+LOG = logging.getLogger(__name__)
 
 
 class DataOnTapProvider(DataOnTapProviderBase):
@@ -24,15 +28,17 @@ class DataOnTapProvider(DataOnTapProviderBase):
 
     def _client_setup(self):
         """Setup the Data ONTAP client"""
-        return Client(hostname=configuration.CONNECTION_HOSTNAME,
-                      transport_type=configuration.CONNECTION_TRANSPORT_TYPE,
-                      port=configuration.CONNECTION_PORT,
-                      username=configuration.AUTH_LOGIN,
-                      password=configuration.AUTH_PASSWORD,
-                      vfiler=configuration.SEVEN_MODE_VFILER)
+        return Client(hostname=configuration.HOSTNAME,
+                      transport_type=configuration.TRANSPORT_TYPE,
+                      port=configuration.PORT,
+                      username=configuration.LOGIN,
+                      password=configuration.PASSWORD,
+                      vfiler=configuration.SEVEN_MODE_VFILER,
+                      verify_cert=configuration.VERIFY_CERT)
 
     def _create_lun_meta(self, lun):
         """Creates LUN metadata dictionary."""
+        LOG.debug("Calling check_is_naelement(%s)", lun)
         self.client.check_is_naelement(lun)
         meta_dict = {}
         meta_dict['Path'] = lun.get_child_content('path')
@@ -49,5 +55,9 @@ class DataOnTapProvider(DataOnTapProviderBase):
         path = lun.metadata['Path']
         clone_path = "%s/%s" % (path.rpartition('/')[0], new_name)
 
+        LOG.debug("Calling clone_lun(%s, %s, %s, %s, %s)", path, clone_path,
+                  lun.name, new_name, self.space_reserved)
         self.client.clone_lun(path, clone_path, lun.name, new_name,
                               self.space_reserved)
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

@@ -155,3 +155,5 @@ class ManageExistingVolumeTypeMismatch(ExtStorageException):
 
 class NetAppDriverException(VolumeDriverException):
     message = _("NetApp Cinder Driver exception.")
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

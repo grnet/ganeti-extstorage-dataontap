@@ -633,3 +633,5 @@ class Client(client_base.Client):
         if self.features.FAST_CLONE_DELETE:
             api_args['is-clone-file'] = 'true'
         self.send_request('file-delete-file', api_args, True)
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :

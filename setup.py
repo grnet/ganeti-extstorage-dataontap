@@ -21,6 +21,8 @@ from setuptools.command.easy_install import log
 import sys
 import os
 
+from extstorage_dataontap import version
+
 # Overload the install command to copy the parameters.list in the installation
 # directory. We use this instead of adding scripts=['parameter.list'] in the
 # setup to copy the file because this will not set the execution bit to the
@@ -44,7 +46,7 @@ class install(_install):
 
 setup(
     name='extstorage_dataontap',
-    version="0.1",
+    version=version,
     description="Ganeti ExtStorage Provider for NetApp's Data ONTAP",
     packages=find_packages(),
     include_package_data=True,
@@ -52,16 +54,19 @@ setup(
     cmdclass={'install': install},
     entry_points={
         'console_scripts': [
-            'create = extstorage_dataontap:create',
-            'attach = extstorage_dataontap:attach',
-            'detach = extstorage_dataontap:detach',
-            'remove = extstorage_dataontap:remove',
-            'grow = extstorage_dataontap:grow',
-            'setinfo = extstorage_dataontap:setinfo',
-            'verify = extstorage_dataontap:verify',
-            'snapshot = extstorage_dataontap:snapshot',
-            'open = extstorage_dataontap:open',
-            'close = extstorage_dataontap:close']},
+            'create = extstorage_dataontap.common:create',
+            'attach = extstorage_dataontap.common:attach',
+            'detach = extstorage_dataontap.common:detach',
+            'remove = extstorage_dataontap.common:remove',
+            'grow = extstorage_dataontap.common:grow',
+            'setinfo = extstorage_dataontap.common:setinfo',
+            'verify = extstorage_dataontap.common:verify',
+            'snapshot = extstorage_dataontap.common:snapshot',
+            'open = extstorage_dataontap.common:open',
+            'close = extstorage_dataontap.common:close',
+            'pre-migrate = extstorage_dataontap.common:pre_move',
+            'pre-failover = extstorage_dataontap.common:pre_move',
+            'post-remove = extstorage_dataontap.common:post_remove']},
     classifiers=[
         'Environment :: Console',
         'License :: OSI Approved :: Apache Software License',

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2014 Clinton Knight. All rights reserved.
-# Copyright (c) 2015 GRNET S.A.
+# Copyright (c) 2015-2016 GRNET S.A.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -15,9 +15,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
+
 from extstorage_dataontap import configuration
 from extstorage_dataontap.provider_base import DataOnTapProviderBase
 from extstorage_dataontap.client.client_cmode import Client
+
+LOG = logging.getLogger(__name__)
 
 
 class DataOnTapProvider(DataOnTapProviderBase):
@@ -26,12 +30,13 @@ class DataOnTapProvider(DataOnTapProviderBase):
     """
     def _client_setup(self):
         """Setup the Data ONTAP client"""
-        return Client(hostname=configuration.CONNECTION_HOSTNAME,
-                      transport_type=configuration.CONNECTION_TRANSPORT_TYPE,
-                      port=configuration.CONNECTION_PORT,
-                      username=configuration.AUTH_LOGIN,
-                      password=configuration.AUTH_PASSWORD,
-                      vserver=configuration.CLUSTER_MODE_VSERVER)
+        return Client(hostname=configuration.HOSTNAME,
+                      transport_type=configuration.TRANSPORT_TYPE,
+                      port=configuration.PORT,
+                      username=configuration.LOGIN,
+                      password=configuration.PASSWORD,
+                      vserver=configuration.CLUSTER_MODE_VSERVER,
+                      verify_cert=configuration.VERIFY_CERT)
 
     def _create_lun_meta(self, lun):
         """Creates LUN metadata dictionary."""
@@ -51,4 +56,8 @@ class DataOnTapProvider(DataOnTapProviderBase):
         """Clone an existing Lun"""
 
         volume = lun.metadata['Volume']
+        LOG.debug("Calling clone_lun(%s, %s, %s, %s)", volume, lun.name,
+                  new_name, self.space_reserved)
         self.client.clone_lun(volume, lun.name, new_name, self.space_reserved)
+
+# vim: set sta sts=4 shiftwidth=4 sw=4 et ai :
